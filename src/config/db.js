@@ -13,6 +13,11 @@ const pool = new Pool({
 pool.on("connect", () => {
   console.log("PostgreSQL veritabanına başarıyla bağlanıldı.");
 });
+// Mevcut bağlantı testinin altına ekleyebilirsin
+pool.on("error", (err) => {
+  console.error("Beklenmedik veritabanı hatası!", err);
+  process.exit(-1); // Ciddi bir hata varsa uygulamayı güvenli kapatır
+});
 
 module.exports = {
   query: (text, params) => pool.query(text, params),
