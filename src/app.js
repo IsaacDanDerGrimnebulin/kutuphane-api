@@ -3,6 +3,7 @@ const config = require("./config/constants");
 const app = express();
 const bookRoutes = require("./routes/book.routes");
 const reviewRoutes = require("./routes/review.routes");
+const authRoutes = require("./routes/auth.routes");
 app.use(express.json());
 /* app.post("/add-book", async (req, res) => {
   try {
@@ -182,4 +183,5 @@ app.use(express.json());
 
 app.use("/books", bookRoutes);
 app.use("/reviews", reviewRoutes); // <--- Bunu ekle
+app.use("/auth", authRoutes);
 app.listen(config.port, () => console.log("5000 portu yanıyor!"));
