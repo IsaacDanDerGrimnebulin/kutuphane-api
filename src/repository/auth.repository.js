@@ -17,6 +17,21 @@ const authRepository = {
       created_at: row.created_at,
     };
   },
+  async findUserByEmail(email) {
+    const query = `SELECT id, kullanici_adi, email, password_hash 
+                    FROM kullanicilar
+                    WHERE email = $1`;
+    const result = await db.query(query, [email]);
+    const row = result.rows[0];
+    if (!row) return null;
+
+    return {
+      id: row.id,
+      username: row.kullanici_adi,
+      email: row.email,
+      password_hash: row.password_hash,
+    };
+  },
 };
 
 module.exports = authRepository;
