@@ -53,10 +53,11 @@ const reviewRepository = {
       created_at: row.tarih,
     };
   },
-  async deleteReviewById(reviewId) {
-    const query = "DELETE FROM incelemeler WHERE id = $1 RETURNING *";
+  async deleteReviewById(bookId, reviewId, userId) {
+    const query =
+      "DELETE FROM incelemeler WHERE id = $1 AND kitap_id = $2 AND kullanici_id = $3 RETURNING *";
 
-    const result = await db.query(query, [reviewId]);
+    const result = await db.query(query, [reviewId, bookId, userId]);
     const row = result.rows[0];
     if (!row) return null;
     return {
@@ -72,6 +73,20 @@ const reviewRepository = {
     const query = "SELECT EXISTS(SELECT 1 FROM incelemeler WHERE id = $1)";
     const result = await db.query(query, [id]);
     return result.rows[0].exists; // true veya false döner
+  },
+  async findReviewById(id) {
+    const query = "SELECT * FROM incelemeler WHERE id = $1";
+    const result = await db.query(query, [id]);
+    const row = result.rows[0];
+    if (!row) return null;
+    return {
+      id: row.id,
+      book_id: row.kitap_id,
+      user_id: row.kullanici_id,
+      rating: row.puan,
+      comment: row.yorum_metni,
+      created_at: row.tarih,
+    };
   },
 };
 module.exports = reviewRepository;

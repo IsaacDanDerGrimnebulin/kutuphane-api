@@ -36,9 +36,19 @@ const reviewController = {
   },
   async createBookReviewByBookId(req, res) {
     try {
-      const params = { kitap_id: req.params.id, ...req.body };
+      const params = {
+        kitap_id: req.params.id, // URL'den gelen (Hangi kitap?)
+        kullanici_id: req.user.id, // Token'dan gelen (Kim yazıyor?)
+        yorum_metni: req.body.yorum_metni, // Body'den sadece gerekli alan
+        puan: req.body.puan, // Body'den sadece gerekli alan
+      };
       const review = await reviewService.createBookReviewByBookId(params);
-
+      if (review.errorType === "EMPTY_RATING_OR_REVIEW_TEXT") {
+        return res.status(400).json({
+          success: false, // BAD REQUEST
+          message: "Puan ve yorum alanı boş bırakılamaz.",
+        });
+      }
       if (review.errorType === "INVALID_RATING") {
         return res
           .status(400) // BAD REQUEST
@@ -75,13 +85,23 @@ const reviewController = {
   },
   async deleteReviewById(req, res) {
     try {
-      const { id } = req.params;
-      const review = await reviewService.deleteReviewById(id);
+      const reviewId = req.params.reviewId;
+      const bookId = req.params.id;
+      const userId = req.user.id;
+      const review = await reviewService.deleteReviewById(
+        bookId,
+        reviewId,
+        userId
+      );
 
       if (review.errorType === "REVIEW_NOT_FOUND") {
         return res
           .status(404) // NOT FOUND
-          .json({ success: false, message: "Review bulunamadı" });
+          .json({
+            success: false,
+            message:
+              "Değerlendirme silinemedi. Bilgileri kontrol edin veya yetkiniz olduğundan emin olun",
+          });
       }
       res.status(200).json({
         success: true,

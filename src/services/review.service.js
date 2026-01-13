@@ -28,7 +28,14 @@ const reviewService = {
     };
   },
   async createBookReviewByBookId(reviwData) {
-    const { kitap_id, puan } = reviwData;
+    const { kitap_id, puan, yorum_metni } = reviwData;
+    // 0. Kontrol: Body ve Params kontrolleri (Bunlar her zaman yapılmalı!)
+    if (!yorum_metni || !puan) {
+      return {
+        errorType: "EMPTY_RATING_OR_REVIEW_TEXT",
+        data: null,
+      };
+    }
     // 1. Kontrol: Puan geçerli mi?
     if (puan < 1 || puan > 5) {
       return { errorType: "INVALID_RATING", data: null };
@@ -49,13 +56,25 @@ const reviewService = {
 
     return { errorType: null, data: review };
   },
-  async deleteReviewById(reviewId) {
-    const deletedReview = await reviewRepository.deleteReviewById(reviewId);
-
+  async deleteReviewById(bookId, reviewId, userId) {
+    const deletedReview = await reviewRepository.deleteReviewById(
+      bookId,
+      reviewId,
+      userId
+    );
+    //console.log(bookId, reviewId, userId);
     if (!deletedReview) {
-      return { errorType: "REVIEW_NOT_FOUND" };
+      return { errorType: "REVIEW_NOT_FOUND", data: null };
     }
     return { errorType: null, data: deletedReview };
+  },
+  async getReviewById(reviewId) {
+    const getReview = await reviewRepository.findReviewById(reviewId);
+
+    if (!getReview) {
+      return { errorType: "REVIEW_NOT_FOUND", data: null };
+    }
+    return { errorType: null, data: getReview };
   },
 };
 
