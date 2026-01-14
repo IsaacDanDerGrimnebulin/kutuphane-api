@@ -1,11 +1,37 @@
 const authRepository = require("../repository/auth.repository");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-require("dotenv").config();
+const { isValidEmail } = require("../utils/customValidation");
 
 const authService = {
   async register(kullanici_adi, email, password) {
     // hashing
+
+    if (
+      !password ||
+      password.trim().length === 0 ||
+      !kullanici_adi ||
+      kullanici_adi.trim().length === 0 ||
+      !email ||
+      email.trim().length === 0
+    ) {
+      return {
+        errorType: "NON_EMPTY_FIELD",
+        data: null,
+      };
+    }
+    if (kullanici_adi.trim().length < 3) {
+      return {
+        errorType: "MIN_LENGTH_REQUIRED",
+        data: null,
+      };
+    }
+    if (!isValidEmail(email)) {
+      return {
+        errorType: "INVALID_EMAIL_FORMAT",
+        data: null,
+      };
+    }
     const password_hash = await bcrypt.hash(password, 10);
     const newUser = await authRepository.createUser(
       kullanici_adi,
@@ -24,14 +50,30 @@ const authService = {
     };
   },
   async login(email, password) {
+    if (
+      !password ||
+      password.trim().length === 0 ||
+      !email ||
+      email.trim().length === 0
+    ) {
+      return {
+        errorType: "NON_EMPTY_FIELD",
+        data: null,
+      };
+    }
+    if (!isValidEmail(email)) {
+      return {
+        errorType: "INVALID_EMAIL_FORMAT",
+        data: null,
+      };
+    }
     const user = await authRepository.findUserByEmail(email);
 
     if (!user) {
       console.log("DEBUG: Kullanıcı e-postası bulunamadı."); // Sadece sen görürsün
       return {
-        success: false,
         errorType: "INVALID_CREDENTIALS",
-        message: "E-posta veya şifre hatalı",
+        data: null,
       };
     }
     // Şifreyi kontrol et.
@@ -43,9 +85,8 @@ const authService = {
     if (!passwordMatch) {
       console.log("DEBUG: Şifre eşleşmedi."); // Sadece sen görürsün
       return {
-        success: false,
         errorType: "INVALID_CREDENTIALS",
-        message: "E-posta veya şifre hatalı",
+        data: null,
       };
     }
     const generatedToken = jwt.sign(

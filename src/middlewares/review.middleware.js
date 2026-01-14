@@ -1,4 +1,5 @@
 const reviewService = require("../services/review.service");
+const CustomError = require("../utils/customError");
 
 const reviewMiddleware = {
   async checkReviewOwnership(req, res, next) {
@@ -8,51 +9,37 @@ const reviewMiddleware = {
       const bookId = req.params.id;
 
       if (isNaN(reviewId) || isNaN(bookId)) {
-        return res.status(400).json({
-          success: false,
-          message: "ID değerleri geçerli bir sayı olmalıdır.",
-          errorType: "INVALID_ID_FORMAT",
-          data: null,
-        });
+        throw new CustomError(
+          "ID değerleri geçerli bir sayı olmalıdır.",
+          400,
+          "INVALID_ID_FORMAT"
+        );
       }
       const review = await reviewService.getReviewById(reviewId);
 
       if (review.errorType === "REVIEW_NOT_FOUND") {
-        return res.status(404).json({
-          success: false,
-          message: "Review bulunamadı.",
-          errorType: "REVIEW_NOT_FOUND",
-          data: null,
-        });
+        throw new CustomError("Review bulunamadı.", 404, "REVIEW_NOT_FOUND");
       }
 
       if (review.data.book_id !== Number(bookId)) {
-        return res.status(404).json({
-          success: false,
-          message: "Bu kitaba ait böyle bir yorum bulunamadı.",
-          errorType: "BOOK_NOT_FOUND",
-          data: null,
-        });
+        throw new CustomError(
+          "Bu kitaba ait böyle bir yorum bulunamadı.",
+          404,
+          "BOOK_NOT_FOUND"
+        );
       }
       // Sahibi mi kontrolü
       if (review.data.user_id !== userId) {
-        return res.status(403).json({
-          success: false,
-          errorType: "AUTHENTICATION_ERROR",
-          message:
-            "Bu işlem için yetkiniz yok. Sadece kendi yorumunuzu yönetebilirsiniz.",
-          data: null,
-        });
+        throw new CustomError(
+          "Bu işlem için yetkiniz yok. Sadece kendi yorumunuzu yönetebilirsiniz.",
+          403,
+          "AUTHENTICATION_ERROR"
+        );
       }
       req.review = review;
       next();
     } catch (error) {
-      console.log("ERROR: ", error);
-      res.status(500).json({
-        success: false,
-        message: "INTERNAL_ERROR!",
-        data: null,
-      });
+      next(error);
     }
   },
 };

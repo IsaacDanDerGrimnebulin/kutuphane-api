@@ -1,4 +1,5 @@
 const bookService = require("../services/book.service");
+const CustomError = require("../utils/customError");
 
 /**
  * 2. Controller Katmanı (İletişimci)
@@ -10,24 +11,28 @@ const bookService = require("../services/book.service");
  */
 const bookController = {
   // book.controller.js
-  async getById(req, res) {
+  async getById(req, res, next) {
     try {
       const book = await bookService.getBookDetails(req.params.id);
 
       if (!book) {
-        return res.status(404).json({
-          success: false,
-          message: "Aradığınız kitap bulunamadı.",
-        });
+        throw new CustomError(
+          "Aradığınız kitap bulunamadı.",
+          404,
+          "BOOK_NOT_FOUND"
+        );
       }
-
-      res.status(200).json({ success: true, data: book });
+      res.status(200).json({
+        success: true,
+        message: "Kitap başarıyla getirildi",
+        data: book,
+      });
     } catch (error) {
       // Beklenmedik bir hata (DB bağlantısı koptu vs.)
-      res.status(500).json({ success: false, message: "Sunucu hatası!" });
+      next(error);
     }
   },
-  async getAllBooks(req, res) {
+  async getAllBooks(req, res, next) {
     try {
       // 1. Query parametrelerini al ve varsayılan değerleri belirle
       // req.query'den gelen her şey stringdir, page'i sayıya çeviriyoruz
@@ -54,7 +59,7 @@ const bookController = {
         data: result.books, // Kitap listesi
       });
     } catch (error) {
-      res.status(500).json({ success: false, message: "Sunucu hatası!" });
+      next(error);
     }
   },
 };

@@ -1,12 +1,13 @@
 const { deleteReviewById } = require("../repository/review.repository");
 const bookService = require("../services/book.service");
 const reviewService = require("../services/review.service");
+const CustomError = require("../utils/customError");
 const reviewController = {
-  async getBookReviewsById(req, res) {
+  async getBookReviewsById(req, res, next) {
     try {
       const { page, limit } = req.query;
       const bookId = req.params.id;
-
+      // TODO: query or search params ? it is a real need?
       const finalLimit = Math.min(parseInt(limit) || 10, 10); // Eğer 10'dan büyükse 10 al, değilse geleni al
       const finalPage = Math.max(parseInt(page) || 1, 1); // En az 1 olsun
       const queryParams = {
@@ -19,9 +20,7 @@ const reviewController = {
       const result = await reviewService.getBookReviewsById(queryParams);
 
       if (!result) {
-        return res
-          .status(404)
-          .json({ success: false, message: "Kitap bulunamadı" });
+        throw new CustomError("Kitap bulunamadı", 404, "BOOK_NOT_FOUND");
       }
       res.status(200).json({
         success: true,
@@ -30,11 +29,10 @@ const reviewController = {
         data: result.reviews, // Kitap listesi
       });
     } catch (error) {
-      console.log(error.message);
-      res.status(500).json({ success: false, message: "Sunucu hatası!" });
+      next(error);
     }
   },
-  async createBookReviewByBookId(req, res) {
+  async createBookReviewByBookId(req, res, next) {
     try {
       const params = {
         kitap_id: req.params.id, // URL'den gelen (Hangi kitap?)
@@ -42,48 +40,44 @@ const reviewController = {
         yorum_metni: req.body.yorum_metni, // Body'den sadece gerekli alan
         puan: req.body.puan, // Body'den sadece gerekli alan
       };
+
       const review = await reviewService.createBookReviewByBookId(params);
       if (review.errorType === "EMPTY_RATING_OR_REVIEW_TEXT") {
-        return res.status(400).json({
-          success: false, // BAD REQUEST
-          message: "Puan ve yorum alanı boş bırakılamaz.",
-        });
+        throw new CustomError(
+          "Puan ve yorum alanı boş bırakılamaz.",
+          400,
+          "EMPTY_RATING_OR_REVIEW_TEXT"
+        );
       }
       if (review.errorType === "INVALID_RATING") {
-        return res
-          .status(400) // BAD REQUEST
-          .json({ success: false, message: "Puan 1 ile 5 arasında olmalıdır" });
+        throw new CustomError(
+          "Puan 1 ile 5 arasında olmalıdır",
+          400,
+          "INVALID_RATING"
+        );
       }
 
       if (review.errorType === "BOOK_NOT_FOUND") {
-        return res
-          .status(404) // NOT FOUND
-          .json({ success: false, message: "Kitap bulunamadı" });
+        throw new CustomError("Kitap bulunamadı", 404, "BOOK_NOT_FOUND");
       }
 
       if (review.errorType === "DATABASE_ERROR") {
-        return res
-          .status(500) // SERVER-ERROR
-          .json({
-            success: false,
-            message: "Kayıt sırasında teknik hata.",
-          });
+        throw new CustomError(
+          "Kayıt sırasında teknik hata.",
+          500,
+          "DATABASE_ERROR"
+        );
       }
+
       return res.status(201).json({
         success: true,
         data: review.data,
       });
     } catch (error) {
-      console.error("Beklenmedik Hata:", error);
-      res
-        .status(500) // SERVER-ERROR
-        .json({
-          success: false,
-          message: "Sunucu tarafında teknik bir hata oluştu",
-        });
+      next(error);
     }
   },
-  async deleteReviewById(req, res) {
+  async deleteReviewById(req, res, next) {
     try {
       const reviewId = req.params.reviewId;
       const bookId = req.params.id;
@@ -95,26 +89,18 @@ const reviewController = {
       );
 
       if (review.errorType === "REVIEW_NOT_FOUND") {
-        return res
-          .status(404) // NOT FOUND
-          .json({
-            success: false,
-            message:
-              "Değerlendirme silinemedi. Bilgileri kontrol edin veya yetkiniz olduğundan emin olun",
-          });
+        throw new CustomError(
+          "Değerlendirme silinemedi. Bilgileri kontrol edin veya yetkiniz olduğundan emin olun",
+          404,
+          "REVIEW_NOT_FOUND"
+        );
       }
       res.status(200).json({
         success: true,
         data: review.data,
       });
     } catch (error) {
-      console.error("Beklenmedik Hata:", error);
-      res
-        .status(500) // SERVER-ERROR
-        .json({
-          success: false,
-          message: "Sunucu tarafında teknik bir hata oluştu",
-        });
+      next(error);
     }
   },
 };
