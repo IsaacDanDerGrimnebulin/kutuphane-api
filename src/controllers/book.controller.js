@@ -1,16 +1,7 @@
 const bookService = require("../services/book.service");
 const CustomError = require("../utils/customError");
 
-/**
- * 2. Controller Katmanı (İletişimci)
- *  Görevi: HTTP dünyası ile uygulama arasındaki köprüdür.
- *  İstekteki verileri (params, query, body) ayıklar.
- *  Servis katmanını çağırır.
- *  Gelen sonucu HTTP durum koduyla (200 OK, 404 Not Found) istemciye döner.
- *  Asla SQL yazmaz, hesaplama yapmaz.
- */
 const bookController = {
-  // book.controller.js
   async getById(req, res, next) {
     try {
       const book = await bookService.getBookDetails(req.params.id);

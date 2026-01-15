@@ -1,11 +1,5 @@
 const db = require("../config/db");
-/**
- * 4. Repository / DAL Katmanı (Veri Kaynağı)
- *  Görevi: Sadece veritabanı ile konuşur.
- *  SQL sorgularını yazar.
- *  Veritabanından gelen ham satırları (rows) alır.
- *  Genelde "Mapping" (az önce konuştuğumuz objeye dönüştürme) işlemini burada veya küçük bir yardımcı fonksiyonda yapar.
- */
+
 const bookRepository = {
   // Tek bir kitabı tüm detaylarıyla getirir
 
