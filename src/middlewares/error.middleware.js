@@ -1,4 +1,14 @@
+const CustomError = require("../utils/customError");
+
 const errorMiddleware = {
+  routeNotFound(req, res, next) {
+    const error = new CustomError(
+      `Can't find ${req.originalUrl} on this server!`,
+      404,
+      "404_NOT_FOUND"
+    );
+    next(error);
+  },
   errorHandler(err, req, res, next) {
     console.error("Hata Detayı: ", err.stack);
 
