@@ -12,4 +12,10 @@ router.delete(
   checkReviewOwnership,
   reviewController.deleteReviewById
 );
+router.put(
+  "/:reviewId",
+  authenticateToken,
+  checkReviewOwnership,
+  reviewController.updateReview
+);
 module.exports = router;

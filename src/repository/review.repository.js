@@ -69,6 +69,32 @@ const reviewRepository = {
       created_at: row.tarih,
     };
   },
+  async updateReviewById(reviewData) {
+    const query = `UPDATE incelemeler
+                   SET puan = $4 ,yorum_metni= $5
+                   WHERE id = $1 AND kitap_id = $2 AND kullanici_id = $3
+                   RETURNING *`;
+    const { reviewId, bookId, userId, finalRating, finalComment } = reviewData;
+    const result = await db.query(query, [
+      reviewId,
+      bookId,
+      userId,
+      finalRating,
+      finalComment,
+    ]);
+    const row = result.rows[0];
+
+    if (!row) return null;
+
+    return {
+      id: row.id,
+      book_id: row.kitap_id,
+      user_id: row.kullanici_id,
+      rating: row.puan,
+      comment: row.yorum_metni,
+      created_at: row.tarih,
+    };
+  },
   async exists(id) {
     const query = "SELECT EXISTS(SELECT 1 FROM incelemeler WHERE id = $1)";
     const result = await db.query(query, [id]);

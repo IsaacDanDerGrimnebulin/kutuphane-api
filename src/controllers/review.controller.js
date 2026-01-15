@@ -71,6 +71,7 @@ const reviewController = {
 
       return res.status(201).json({
         success: true,
+        message: "Yorum başarıyla oluşturuldu",
         data: review.data,
       });
     } catch (error) {
@@ -97,6 +98,56 @@ const reviewController = {
       }
       res.status(200).json({
         success: true,
+        message: "Yorum başarıyla silindi",
+        data: review.data,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+  async updateReview(req, res, next) {
+    try {
+      const reviewId = req.params.reviewId;
+      const bookId = req.params.id;
+      const userId = req.user.id;
+      const { puan, yorum_metni } = req.body;
+
+      const reviewData = { reviewId, bookId, userId, puan, yorum_metni };
+
+      const review = await reviewService.updateReview(reviewData);
+
+      if (review.errorType === "INVALID_TYPE") {
+        throw new CustomError(
+          "Puan bir tam sayı olmalıdır",
+          400,
+          "INVALID_TYPE"
+        );
+      }
+      if (review.errorType === "OUT_OF_RANGE") {
+        throw new CustomError(
+          "Puan 0 ile 5 arasında olmalıdır",
+          400,
+          "OUT_OF_RANGE"
+        );
+      }
+      if (review.errorType === "CONTENT_TOO_LONG_OR_TOO_SHORT") {
+        throw new CustomError(
+          "Yorum minimum 3, maxiumum 500 karakterden oluşmalı",
+          400,
+          "CONTENT_TOO_LONG_OR_TOO_SHORT"
+        );
+      }
+
+      if (review.errorType === "UPDATE_FAILED") {
+        throw new CustomError(
+          "Güncellenmek istenen inceleme bulunamadı.",
+          404,
+          "RESOURCE_NOT_FOUND"
+        );
+      }
+      res.status(200).json({
+        success: true,
+        message: "İnceleme başarıyla güncellendi",
         data: review.data,
       });
     } catch (error) {

@@ -76,6 +76,45 @@ const reviewService = {
     }
     return { errorType: null, data: getReview };
   },
+  async updateReview(reviewData) {
+    const { reviewId, bookId, userId, puan, yorum_metni } = reviewData;
+
+    // 1. Integer Kontrolü
+    if (puan !== undefined && !Number.isInteger(puan)) {
+      return { errorType: "INVALID_TYPE", data: null };
+    }
+
+    // 2. Puan Sınırı (0-5 arası örneği)
+    if (puan !== undefined && (puan < 1 || puan > 5)) {
+      return { errorType: "OUT_OF_RANGE", data: null };
+    }
+
+    // 3. Yorum Uzunluğu (Örn: Max 500 karakter)
+    if (
+      (yorum_metni !== undefined && yorum_metni.length > 500) ||
+      yorum_metni.length < 3
+    ) {
+      return { errorType: "CONTENT_TOO_LONG_OR_TOO_SHORT", data: null };
+    }
+    const existing = await reviewRepository.findReviewById(reviewId);
+
+    const finalRating = puan ?? existing.rating;
+    const finalComment = yorum_metni ?? existing.comment;
+
+    const finalReviewData = {
+      reviewId,
+      bookId,
+      userId,
+      finalRating,
+      finalComment,
+    };
+    const updated = await reviewRepository.updateReviewById(finalReviewData);
+
+    if (!updated) {
+      return { errorType: "UPDATE_FAILED", data: null };
+    }
+    return { errorType: null, data: updated };
+  },
 };
 
 module.exports = reviewService;
