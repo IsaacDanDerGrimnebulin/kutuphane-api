@@ -11,6 +11,7 @@ const reviewRoutes = require("./routes/review.routes");
 const authRoutes = require("./routes/auth.routes");
 const userRoutes = require("./routes/user.routes");
 const errorMiddleware = require("./middlewares/error.middleware");
+const feedRoutes = require("./routes/feed.routes");
 
 app.use(cors(corsOptions));
 app.use(express.json());
@@ -19,6 +20,7 @@ app.use("/books", bookRoutes);
 app.use("/reviews", reviewRoutes);
 app.use("/auth", authRoutes);
 app.use("/users", userRoutes);
+app.use("/feed", feedRoutes);
 
 app.use(errorMiddleware.routeNotFound);
 app.use(errorMiddleware.errorHandler);

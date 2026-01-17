@@ -115,6 +115,27 @@ const reviewService = {
     }
     return { errorType: null, data: updated };
   },
+
+  async getAllReviews(queryParams) {
+    const { page = 1, limit = 10 } = queryParams;
+    const offset = (page - 1) * limit;
+
+    const [reviews, totalCount] = await Promise.all([
+      reviewRepository.getAllReviews(limit, offset),
+      reviewRepository.getReviewCount(),
+    ]);
+
+    const totalPages = Math.ceil(totalCount / limit);
+
+    return {
+      reviews: reviews,
+      pagination: {
+        totalCount,
+        totalPages,
+        currentPage: page,
+      },
+    };
+  },
 };
 
 module.exports = reviewService;

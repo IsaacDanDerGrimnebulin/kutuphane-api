@@ -27,7 +27,13 @@ const reviewRepository = {
 
     return resultDAL; // Yine map() yaparak DAL formatına çevirebilirsin
   },
-  // 2. Toplam sayıyı getiren sorgu
+
+  async getReviewCount() {
+    const query = `SELECT COUNT(*)::INT FROM incelemeler`;
+    const result = await db.query(query, []);
+    return Number(result.rows[0].count);
+  },
+
   async getCountByBookId(bookId) {
     const query = `SELECT COUNT(*) FROM incelemeler WHERE kitap_id = $1`;
     const result = await db.query(query, [bookId]);
@@ -113,6 +119,48 @@ const reviewRepository = {
       comment: row.yorum_metni,
       created_at: row.tarih,
     };
+  },
+  async getAllReviews(limit, offset) {
+    const query = `SELECT 
+                    i.id AS inceleme_id,
+                    i.yorum_metni,
+                    i.puan,
+                    i.tarih AS created_at,
+                    k.id AS kitap_id,
+                    k.kitap_adi,
+                    y.id AS yazar_id,
+                    y.yazar_adi,
+                    ku.id AS kullanici_id,
+                    ku.kullanici_adi
+                FROM incelemeler i
+                JOIN kitaplar k ON k.id = i.kitap_id
+                JOIN kullanicilar ku ON ku.id = i.kullanici_id
+                JOIN yazarlar y ON y.id = k.yazar_id
+                ORDER BY i.tarih DESC
+                LIMIT $1 OFFSET $2`;
+    const values = [limit, offset];
+    const result = await db.query(query, values);
+    const resultDAL = result.rows.map((row) => {
+      return {
+        review_id: row.inceleme_id,
+        rating: row.puan,
+        comment: row.yorum_metni,
+        created_at: row.created_at,
+        book: {
+          id: row.kitap_id,
+          name: row.kitap_adi,
+        },
+        author: {
+          id: row.yazar_id,
+          name: row.yazar_adi,
+        },
+        user: {
+          id: row.kullanici_id,
+          name: row.kullanici_adi,
+        },
+      };
+    });
+    return resultDAL;
   },
 };
 module.exports = reviewRepository;

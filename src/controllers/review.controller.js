@@ -46,14 +46,14 @@ const reviewController = {
         throw new CustomError(
           "Puan ve yorum alanı boş bırakılamaz.",
           400,
-          "EMPTY_RATING_OR_REVIEW_TEXT"
+          "EMPTY_RATING_OR_REVIEW_TEXT",
         );
       }
       if (review.errorType === "INVALID_RATING") {
         throw new CustomError(
           "Puan 1 ile 5 arasında olmalıdır",
           400,
-          "INVALID_RATING"
+          "INVALID_RATING",
         );
       }
 
@@ -65,7 +65,7 @@ const reviewController = {
         throw new CustomError(
           "Kayıt sırasında teknik hata.",
           500,
-          "DATABASE_ERROR"
+          "DATABASE_ERROR",
         );
       }
 
@@ -86,14 +86,14 @@ const reviewController = {
       const review = await reviewService.deleteReviewById(
         bookId,
         reviewId,
-        userId
+        userId,
       );
 
       if (review.errorType === "REVIEW_NOT_FOUND") {
         throw new CustomError(
           "Değerlendirme silinemedi. Bilgileri kontrol edin veya yetkiniz olduğundan emin olun",
           404,
-          "REVIEW_NOT_FOUND"
+          "REVIEW_NOT_FOUND",
         );
       }
       res.status(200).json({
@@ -120,21 +120,21 @@ const reviewController = {
         throw new CustomError(
           "Puan bir tam sayı olmalıdır",
           400,
-          "INVALID_TYPE"
+          "INVALID_TYPE",
         );
       }
       if (review.errorType === "OUT_OF_RANGE") {
         throw new CustomError(
           "Puan 0 ile 5 arasında olmalıdır",
           400,
-          "OUT_OF_RANGE"
+          "OUT_OF_RANGE",
         );
       }
       if (review.errorType === "CONTENT_TOO_LONG_OR_TOO_SHORT") {
         throw new CustomError(
           "Yorum minimum 3, maxiumum 500 karakterden oluşmalı",
           400,
-          "CONTENT_TOO_LONG_OR_TOO_SHORT"
+          "CONTENT_TOO_LONG_OR_TOO_SHORT",
         );
       }
 
@@ -142,13 +142,45 @@ const reviewController = {
         throw new CustomError(
           "Güncellenmek istenen inceleme bulunamadı.",
           404,
-          "RESOURCE_NOT_FOUND"
+          "RESOURCE_NOT_FOUND",
         );
       }
       res.status(200).json({
         success: true,
         message: "İnceleme başarıyla güncellendi",
         data: review.data,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+  async getAllReviews(req, res, next) {
+    try {
+      const { page, limit } = req.query;
+
+      // TODO: query or search params ? it is a real need?
+      const finalLimit = Math.min(parseInt(limit) || 10, 10);
+      const finalPage = Math.max(parseInt(page) || 1, 1);
+      const queryParams = {
+        page: finalPage,
+        limit: finalLimit,
+      };
+
+      // 2. Servis katmanını çağır
+      const result = await reviewService.getAllReviews(queryParams);
+
+      if (!result) {
+        throw new CustomError(
+          "Yorumlar listelenemdi",
+          404,
+          "REVIEWS_NOT_FOUND",
+        );
+      }
+      res.status(200).json({
+        success: true,
+        message: "Yorumlar başarıyla getirildi",
+        metadata: result.pagination, // Sayfalama bilgileri
+        data: result.reviews, // Yorum listesi
       });
     } catch (error) {
       next(error);
