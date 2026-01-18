@@ -13,18 +13,23 @@ const bookRepository = {
                   y.yazar_adi,
                   kat.id AS kategori_id,
                   kat.ad AS kategori_adi,
-                  kat.slug AS kategori_slug
+                  kat.slug AS kategori_slug,
+				      COALESCE(ROUND(AVG(i.puan)::numeric, 2), 0) AS ortalama_puan,
+              COALESCE( COUNT(i.id), 0) AS yorum_sayisi
               FROM kitaplar k
               JOIN yazarlar y ON k.yazar_id = y.id
               JOIN kategoriler kat ON k.kategori_id = kat.id
-              WHERE k.id = $1`;
+			        LEFT JOIN incelemeler i ON k.id = i.kitap_id
+			        WHERE k.id = $1
+			        GROUP BY k.id,y.id,kat.id`;
     const result = await db.query(query, [id]);
     const row = result.rows[0];
     if (!row) return null;
     const resultDAL = {
       id: row.kitap_id, // Artık k.id ile çakışmıyor!
       kitap_adi: row.kitap_adi,
-      fiyat: Number(row.fiyat),
+      ortalama_puan: Number(row.ortalama_puan),
+      yorum_sayisi: Number(row.yorum_sayisi),
       yazar: {
         id: row.yazar_id, // y.id'den gelen değer
         ad: row.yazar_adi,
@@ -46,18 +51,23 @@ const bookRepository = {
                    y.yazar_adi,
                    kat.id AS kategori_id,
                    kat.ad AS kategori_adi,
-                   kat.slug AS kategori_slug
+                   kat.slug AS kategori_slug,
+				   COALESCE(ROUND(AVG(i.puan)::numeric, 2), 0) AS ortalama_puan,
+				  COALESCE( COUNT(i.id), 0) AS yorum_sayisi
                   FROM kitaplar k 
                   JOIN yazarlar y ON k.yazar_id = y.id 
                   JOIN kategoriler kat ON k.kategori_id = kat.id
+				  LEFT JOIN incelemeler i ON k.id = i.kitap_id
                   WHERE k.kitap_adi ILIKE $1
+				  GROUP BY k.id,y.id,kat.id,kat.id
                   LIMIT $2 OFFSET $3`;
     const result = await db.query(query, [`${filters.q}%`, limit, offset]);
     const resultDAL = result.rows.map((row) => {
       return {
         id: row.kitap_id, // Artık k.id ile çakışmıyor!
         kitap_adi: row.kitap_adi,
-        fiyat: Number(row.fiyat),
+        ortalama_puan: Number(row.ortalama_puan),
+        yorum_sayisi: Number(row.yorum_sayisi),
         yazar: {
           id: row.yazar_id, // y.id'den gelen değer
           ad: row.yazar_adi,
