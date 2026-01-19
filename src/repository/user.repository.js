@@ -15,5 +15,68 @@ const userRepository = {
       created_at: row.created_at,
     };
   },
+  async findAllBookReviewedByUserId(filters, limit, offset, userId) {
+    const query = `SELECT 
+                    k.id AS kitap_id, 
+                    k.kitap_adi, 
+                    y.id AS yazar_id, 
+                    y.yazar_adi,
+                    kat.id AS kategori_id,
+                    kat.ad AS kategori_adi,
+                    kat.slug AS kategori_slug,
+                    stats.yorum_sayisi,
+                    stats.ortalama_puan
+                  FROM incelemeler i 
+                  JOIN kitaplar k ON k.id = i.kitap_id
+                  JOIN yazarlar y ON k.yazar_id = y.id 
+                  JOIN kategoriler kat ON k.kategori_id = kat.id
+                  -- Kitap bazlı genel istatistikleri getiren join:
+                  LEFT JOIN (
+                      SELECT 
+                          kitap_id, 
+                          COALESCE( COUNT(id), 0) AS yorum_sayisi, 
+                          COALESCE(ROUND(AVG(puan)::numeric, 2), 0) AS ortalama_puan 
+                      FROM incelemeler
+                      GROUP BY kitap_id
+                  ) stats ON stats.kitap_id = k.id
+                  WHERE k.kitap_adi ILIKE $1 AND i.kullanici_id = $2
+                  GROUP BY k.id, y.id, kat.id, stats.yorum_sayisi, stats.ortalama_puan
+                  LIMIT $3 OFFSET $4`;
+    const result = await db.query(query, [
+      `${filters.q}%`,
+      userId,
+      limit,
+      offset,
+    ]);
+    const resultDAL = result.rows.map((row) => {
+      return {
+        id: row.kitap_id,
+        kitap_adi: row.kitap_adi,
+        ortalama_puan: Number(row.ortalama_puan),
+        yorum_sayisi: Number(row.yorum_sayisi),
+        yazar: {
+          id: row.yazar_id, // y.id'den gelen değer
+          ad: row.yazar_adi,
+        },
+        kategori: {
+          id: row.kategori_id, // y.id'den gelen değer
+          ad: row.kategori_adi,
+          slug: row.kategori_slug,
+        },
+      };
+    });
+
+    return resultDAL;
+  },
+  // 2. Toplam sayıyı getiren sorgu
+  async countAllBookReviewedByUserId(filters, userId) {
+    const query = `SELECT COUNT(DISTINCT k.id)
+                          FROM incelemeler i
+                          JOIN kitaplar k ON k.id = i.kitap_id
+                          WHERE kitap_adi ILIKE $1 AND i.kullanici_id = $2`;
+    const values = [`${filters.q}%`, userId];
+    const result = await db.query(query, values);
+    return Number(result.rows[0].count);
+  },
 };
 module.exports = userRepository;

@@ -15,5 +15,28 @@ const userService = {
       data: user,
     };
   },
+  async getAllBookReviewedByUser(userId, queryParams) {
+    const { q = "", page = 1, limit = 10 } = queryParams;
+
+    const offset = (page - 1) * limit;
+
+    // Repository fonksiyonlarını çağırıyoruz
+    // Promise.all kullanarak ikisini aynı anda (paralel) çalıştırıyoruz
+    const [books, totalCount] = await Promise.all([
+      userRepository.findAllBookReviewedByUserId({ q }, limit, offset, userId),
+      userRepository.countAllBookReviewedByUserId({ q }, userId),
+    ]);
+
+    const totalPages = Math.ceil(totalCount / limit);
+
+    return {
+      books: books,
+      pagination: {
+        totalCount,
+        totalPages,
+        currentPage: page,
+      },
+    };
+  },
 };
 module.exports = userService;
