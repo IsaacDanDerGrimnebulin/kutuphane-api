@@ -6,7 +6,7 @@ const userController = require("../controllers/user.controller");
 
 router.get("/me", authenticateToken.authenticateToken, userController.getMe);
 router.get(
-  "/reviewed_books",
+  "/me/reviewed_books",
   authenticateToken.authenticateToken,
   userController.findAllBookReviewedByUserId,
 );
