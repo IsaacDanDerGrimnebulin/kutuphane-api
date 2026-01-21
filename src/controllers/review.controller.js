@@ -75,6 +75,14 @@ const reviewController = {
         data: review.data,
       });
     } catch (error) {
+      // Eğer DB'den UNIQUE kısıtlaması hatası gelirse (örn: email zaten var)
+      if (error.code === "23505") {
+        throw new CustomError(
+          "Bu kitabı zaten oyladınız. Mevcut yorumunuzu düzenleyebilirsiniz",
+          409,
+          "ALREADY_REVIEWED",
+        );
+      }
       next(error);
     }
   },
