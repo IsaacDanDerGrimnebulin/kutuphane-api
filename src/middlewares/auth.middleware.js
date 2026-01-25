@@ -17,7 +17,7 @@ const authMiddleware = {
     // Token doğrulama
     jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
       if (err) {
-        return res.status(403).json({
+        return res.status(401).json({
           success: false,
           error: "Geçersiz veya süresi dolmuş token.",
           errorType: "AUTHENTICATION_ERROR",
