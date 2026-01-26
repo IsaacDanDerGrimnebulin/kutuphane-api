@@ -3,7 +3,7 @@ const reviewRepository = require("../repository/review.repository");
 
 const reviewService = {
   async getBookReviewsById(queryParams) {
-    const { bookId, page = 1, limit = 10 } = queryParams;
+    const { userId, bookId, page = 1, limit = 10 } = queryParams;
     const offset = (page - 1) * limit;
     // 1. Kitap var mı kontrol et
     const bookExists = await bookRepository.exists(bookId);
@@ -12,7 +12,7 @@ const reviewService = {
       return null; // Kitap yoksa direkt null dön, aşağıya hiç bakma
     }
     const [reviews, totalCount] = await Promise.all([
-      reviewRepository.findByBookId(bookId, limit, offset),
+      reviewRepository.findByBookId(userId, bookId, limit, offset),
       reviewRepository.getCountByBookId(bookId),
     ]);
 
@@ -60,7 +60,7 @@ const reviewService = {
     const deletedReview = await reviewRepository.deleteReviewById(
       bookId,
       reviewId,
-      userId
+      userId,
     );
     //console.log(bookId, reviewId, userId);
     if (!deletedReview) {

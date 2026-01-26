@@ -7,10 +7,12 @@ const reviewController = {
     try {
       const { page, limit } = req.query;
       const bookId = req.params.id;
+      const userId = req.user.id;
       // TODO: query or search params ? it is a real need?
       const finalLimit = Math.min(parseInt(limit) || 10, 10); // Eğer 10'dan büyükse 10 al, değilse geleni al
       const finalPage = Math.max(parseInt(page) || 1, 1); // En az 1 olsun
       const queryParams = {
+        userId: userId,
         bookId: bookId,
         page: finalPage,
         limit: finalLimit,

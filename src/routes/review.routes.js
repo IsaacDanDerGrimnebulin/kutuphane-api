@@ -4,18 +4,18 @@ const reviewController = require("../controllers/review.controller");
 const { authenticateToken } = require("../middlewares/auth.middleware");
 const { checkReviewOwnership } = require("../middlewares/review.middleware");
 
-router.get("/", reviewController.getBookReviewsById);
+router.get("/", authenticateToken, reviewController.getBookReviewsById);
 router.post("/", authenticateToken, reviewController.createBookReviewByBookId);
 router.delete(
   "/:reviewId",
   authenticateToken,
   checkReviewOwnership,
-  reviewController.deleteReviewById
+  reviewController.deleteReviewById,
 );
 router.put(
   "/:reviewId",
   authenticateToken,
   checkReviewOwnership,
-  reviewController.updateReview
+  reviewController.updateReview,
 );
 module.exports = router;

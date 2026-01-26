@@ -1,16 +1,22 @@
 const db = require("../config/db");
 
 const reviewRepository = {
-  async findByBookId(bookId, limit, offset) {
+  async findByBookId(userId, bookId, limit, offset) {
     const query = `
-        SELECT i.*, k.kullanici_adi
-        FROM incelemeler i 
-        JOIN kullanicilar k ON i.kullanici_id = k.id 
-        WHERE i.kitap_id = $1
-        ORDER BY i.tarih DESC 
-        LIMIT $2 OFFSET $3`;
+              SELECT i.*, k.kullanici_adi,
+              i.begeni_sayisi AS "likeCount",
+              EXISTS (
+                SELECT 1 FROM inceleme_begenileri
+                  WHERE inceleme_id = i.id AND kullanici_id = $1
+              ) AS "isLiked"
+              FROM incelemeler i 
+              JOIN kullanicilar k ON i.kullanici_id = k.id 
+              WHERE i.kitap_id = $2
+              ORDER BY i.tarih DESC 
+              LIMIT $3 OFFSET $4
+       `;
 
-    const values = [bookId, limit, offset];
+    const values = [userId, bookId, limit, offset];
     const result = await db.query(query, values);
     const resultDAL = result.rows.map((row) => {
       return {
@@ -18,6 +24,8 @@ const reviewRepository = {
         rating: row.puan,
         comment: row.yorum_metni,
         created_at: row.tarih,
+        isLiked: row.isLiked,
+        likeCount: row.likeCount,
         user: {
           id: row.kullanici_id,
           username: row.kullanici_adi,
