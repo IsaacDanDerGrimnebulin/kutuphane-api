@@ -167,11 +167,12 @@ const reviewController = {
   async getAllReviews(req, res, next) {
     try {
       const { page, limit } = req.query;
-
+      const userId = req.user.id;
       // TODO: query or search params ? it is a real need?
       const finalLimit = Math.min(parseInt(limit) || 10, 10);
       const finalPage = Math.max(parseInt(page) || 1, 1);
       const queryParams = {
+        userId: userId,
         page: finalPage,
         limit: finalLimit,
       };

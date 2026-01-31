@@ -117,11 +117,12 @@ const reviewService = {
   },
 
   async getAllReviews(queryParams) {
-    const { page = 1, limit = 10 } = queryParams;
+    const { userId, page = 1, limit = 10 } = queryParams;
+
     const offset = (page - 1) * limit;
 
     const [reviews, totalCount] = await Promise.all([
-      reviewRepository.getAllReviews(limit, offset),
+      reviewRepository.getAllReviews(userId, limit, offset),
       reviewRepository.getReviewCount(),
     ]);
 
