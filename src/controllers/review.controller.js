@@ -197,5 +197,33 @@ const reviewController = {
       next(error);
     }
   },
+  async toggleLike(req, res, next) {
+    try {
+      const userId = req.user.id;
+      const reviewId = req.params.id;
+      const result = await reviewService.toggleLike(userId, reviewId);
+
+      // Başarılı senaryolar (200 veya 201)
+      return res.status(result.liked ? 201 : 200).json({
+        success: true,
+        liked: result.liked,
+        message: result.liked ? "Beğeni eklendi" : "Beğeni kaldırıldı",
+        data: result.data,
+      });
+    } catch (error) {
+      if (error.code === "23505") {
+        throw new CustomError("Zaten beğendiniz.", 409, "ALREADY_LIKED");
+      }
+
+      if (error.code === "23503") {
+        throw new CustomError(
+          "Geçersiz kullanıcı veya inceleme.",
+          400,
+          "INVALID_REFERENCE",
+        );
+      }
+      next(error);
+    }
+  },
 };
 module.exports = reviewController;

@@ -137,6 +137,18 @@ const reviewService = {
       },
     };
   },
+  async toggleLike(userId, reviewId) {
+    const isExist = await reviewRepository.existingLike(userId, reviewId);
+    if (isExist) {
+      const removeLike = await reviewRepository.deleteReviewLike(
+        userId,
+        reviewId,
+      );
+      return { data: removeLike, errorType: null, liked: false };
+    }
+    const insertLike = await reviewRepository.addReviewLike(userId, reviewId);
+    return { data: insertLike, errorType: null, liked: true };
+  },
 };
 
 module.exports = reviewService;

@@ -175,5 +175,39 @@ const reviewRepository = {
     });
     return resultDAL;
   },
+  async addReviewLike(userId, reviewId) {
+    const query = `INSERT INTO inceleme_begenileri (kullanici_id, inceleme_id) VALUES ($1, $2) RETURNING *`;
+    const values = [userId, reviewId];
+    const result = await db.query(query, values);
+    const row = result.rows[0];
+    return {
+      like_id: row.id,
+      review_id: row.inceleme_id,
+      user_id: row.kullanici_id,
+      created_at: row.created_at,
+    };
+  },
+  async deleteReviewLike(userId, reviewId) {
+    const query = `DELETE FROM inceleme_begenileri
+                       WHERE kullanici_id = $1 AND inceleme_id = $2 RETURNING *`;
+    const values = [userId, reviewId];
+    const result = await db.query(query, values);
+    const row = result.rows[0];
+
+    return {
+      like_id: row.id,
+      review_id: row.inceleme_id,
+      user_id: row.kullanici_id,
+      created_at: row.created_at,
+    };
+  },
+  async existingLike(userId, reviewId) {
+    const query = `SELECT EXISTS (SELECT id FROM inceleme_begenileri
+                   WHERE kullanici_id = $1 AND inceleme_id = $2)`;
+    const values = [userId, reviewId];
+    const result = await db.query(query, values);
+
+    return result.rows[0].exists;
+  },
 };
 module.exports = reviewRepository;
