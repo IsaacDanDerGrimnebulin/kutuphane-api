@@ -41,5 +41,36 @@ const authorRepository = {
       },
     };
   },
+  async exists(id) {
+    const query = "SELECT EXISTS(SELECT 1 FROM yazarlar WHERE id = $1)";
+    const result = await db.query(query, [id]);
+    return result.rows[0].exists;
+  },
+  async findAll(authorId, limit, offset) {
+    const query = `SELECT k.id,
+		                    k.kitap_adi,
+		                    COALESCE(ROUND(AVG(i.puan)::numeric, 2), 0) AS ortalama_puan
+                        FROM kitaplar k
+                        LEFT JOIN incelemeler i ON i.kitap_id = k.id 
+                        WHERE k.yazar_id = $1
+                        GROUP BY k.id
+                        LIMIT $2 OFFSET $3
+                        `;
+    const result = await db.query(query, [authorId, limit, offset]);
+    const resultDAL = result.rows.map((row) => {
+      return {
+        id: row.id,
+        kitap_adi: row.kitap_adi,
+        ortalama_puan: Number(row.ortalama_puan),
+      };
+    });
+
+    return resultDAL;
+  },
+  async countAll(authorId) {
+    const query = `SELECT COUNT(*) FROM kitaplar WHERE yazar_id=$1`;
+    const result = await db.query(query, [authorId]);
+    return Number(result.rows[0].count);
+  },
 };
 module.exports = authorRepository;
