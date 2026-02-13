@@ -10,5 +10,10 @@ router.get(
   authenticateToken.authenticateToken,
   userController.findAllBookReviewedByUserId,
 );
+router.get(
+  "/:id",
+  authenticateToken.authenticateToken,
+  userController.getUserProfileByUserId,
+);
 
 module.exports = router;

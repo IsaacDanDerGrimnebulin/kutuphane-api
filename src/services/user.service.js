@@ -38,5 +38,17 @@ const userService = {
       },
     };
   },
+  async getUserProfileByUserId(userId) {
+    const user = await userRepository.findProfileByUserId(userId);
+
+    if (!user) {
+      return { errorType: "USER_NOT_FOUND", data: null };
+    }
+
+    return {
+      data: user,
+      errorType: null,
+    };
+  },
 };
 module.exports = userService;

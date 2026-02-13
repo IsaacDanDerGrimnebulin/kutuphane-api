@@ -78,5 +78,42 @@ const userRepository = {
     const result = await db.query(query, values);
     return Number(result.rows[0].count);
   },
+  async findProfileByUserId(userId) {
+    const query = `SELECT k.id,k.kullanici_adi,
+                          p.ad,
+                          p.soyad,
+                          p.bio,
+                          p.avatar_url,
+                          p.banner_url,
+                          k.created_at,
+                          p.dogum_tarihi,
+                          COALESCE(ROUND(AVG(i.puan)::numeric, 2), 0) AS ortalama_puan,
+                          COALESCE(COUNT(i.id), 0) AS yorum_sayisi
+                        FROM kullanicilar k
+                        JOIN profil p ON p.kullanici_id = k.id
+                        LEFT JOIN incelemeler i ON i.kullanici_id = k.id
+                        WHERE k.id = $1
+                        GROUP BY
+                          k.id,
+                          p.id`;
+    const result = await db.query(query, [userId]);
+    const row = result.rows[0];
+
+    if (!row) return null;
+
+    return {
+      userid: row.id,
+      username: row.kullanici_adi,
+      first_name: row.ad,
+      last_name: row.soyad,
+      bio: row.bio,
+      avatar_url: row.avatar_url,
+      banner_url: row.banner_url,
+      joinDate: row.created_at,
+      birthDate: row.dogum_tarihi,
+      reviewAvg: row.ortalama_puan,
+      reviewCount: row.yorum_sayisi,
+    };
+  },
 };
 module.exports = userRepository;
