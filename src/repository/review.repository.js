@@ -209,5 +209,61 @@ const reviewRepository = {
 
     return result.rows[0].exists;
   },
+  async getAllReviewByUserId(ownerId, userId, limit, offset) {
+    const query = `SELECT 
+                    i.id AS inceleme_id,
+                    i.yorum_metni,
+                    i.puan,
+                    i.tarih AS created_at,
+					i.begeni_sayisi AS "like_count",
+                    k.id AS kitap_id,
+                    k.kitap_adi,
+                    y.id AS yazar_id,
+                    y.yazar_adi,
+                    ku.id AS kullanici_id,
+                    ku.kullanici_adi,
+					EXISTS (SELECT 1 FROM inceleme_begenileri
+					-- $1 login olan kimse auth üzerinden id al
+					WHERE inceleme_id = i.id AND kullanici_id = $1) AS "isLiked"
+                FROM incelemeler i
+                JOIN kitaplar k ON k.id = i.kitap_id
+                JOIN kullanicilar ku ON ku.id = i.kullanici_id
+                JOIN yazarlar y ON y.id = k.yazar_id
+                WHERE i.kullanici_id = $2
+                ORDER BY i.tarih DESC
+				-- Burası profiline bakılan kimse param olarak id al
+                LIMIT $3 OFFSET $4`;
+    const values = [ownerId, userId, limit, offset];
+    const result = await db.query(query, values);
+    const resultDAL = result.rows.map((row) => {
+      return {
+        review_id: row.inceleme_id,
+        rating: row.puan,
+        comment: row.yorum_metni,
+        created_at: row.created_at,
+        isLiked: row.isLiked,
+        like_count: row.like_count,
+        book: {
+          id: row.kitap_id,
+          name: row.kitap_adi,
+        },
+        author: {
+          id: row.yazar_id,
+          name: row.yazar_adi,
+        },
+        user: {
+          id: row.kullanici_id,
+          name: row.kullanici_adi,
+        },
+      };
+    });
+    return resultDAL;
+  },
+  async getReviewCountByUserId(userId) {
+    const query = `SELECT COUNT(*)::INT FROM incelemeler
+                    WHERE kullanici_id = $1`;
+    const result = await db.query(query, [userId]);
+    return Number(result.rows[0].count);
+  },
 };
 module.exports = reviewRepository;

@@ -1,5 +1,6 @@
 const bookRepository = require("../repository/book.repository");
 const reviewRepository = require("../repository/review.repository");
+const userRepository = require("../repository/user.repository");
 
 const reviewService = {
   async getBookReviewsById(queryParams) {
@@ -148,6 +149,32 @@ const reviewService = {
     }
     const insertLike = await reviewRepository.addReviewLike(userId, reviewId);
     return { data: insertLike, errorType: null, liked: true };
+  },
+  async getAllReviewsByUserId(queryParams) {
+    const { ownerId, userId, page = 1, limit = 10 } = queryParams;
+
+    const offset = (page - 1) * limit;
+
+    const exists = await userRepository.exists(userId);
+    if (!exists) {
+      return { errorType: "USER_NOT_FOUND", data: null };
+    }
+
+    const [reviews, totalCount] = await Promise.all([
+      reviewRepository.getAllReviewByUserId(ownerId, userId, limit, offset),
+      reviewRepository.getReviewCountByUserId(userId),
+    ]);
+
+    const totalPages = Math.ceil(totalCount / limit);
+
+    return {
+      reviews: reviews,
+      pagination: {
+        totalCount,
+        totalPages,
+        currentPage: page,
+      },
+    };
   },
 };
 

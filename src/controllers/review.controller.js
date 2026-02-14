@@ -176,7 +176,7 @@ const reviewController = {
         page: finalPage,
         limit: finalLimit,
       };
-
+      // TODO: Yorumların olamaması bir sorun mu? boş liste dönebilir mi?
       // 2. Servis katmanını çağır
       const result = await reviewService.getAllReviews(queryParams);
 
@@ -222,6 +222,39 @@ const reviewController = {
           "INVALID_REFERENCE",
         );
       }
+      next(error);
+    }
+  },
+  async getAllReviewsByUserId(req, res, next) {
+    try {
+      const { page, limit } = req.query;
+      const ownerId = req.user.id;
+      const userId = req.params.id;
+      // TODO: query or search params ? it is a real need?
+      const finalLimit = Math.min(parseInt(limit) || 10, 10);
+      const finalPage = Math.max(parseInt(page) || 1, 1);
+      const queryParams = {
+        ownerId: ownerId,
+        userId: userId,
+        page: finalPage,
+        limit: finalLimit,
+      };
+
+      // 2. Servis katmanını çağır
+      const result = await reviewService.getAllReviewsByUserId(queryParams);
+
+      if (result.errorType === "USER_NOT_FOUND") {
+        throw new CustomError("Kullanıcı bulunamadı", 404, "USER_NOT_FOUND");
+      }
+      const isOwner = String(ownerId) === String(userId);
+      res.status(200).json({
+        success: true,
+        message: "Yorumlar başarıyla getirildi",
+        metadata: result.pagination, // Sayfalama bilgileri
+        data: result.reviews, // Yorum listesi
+        isOwner: isOwner,
+      });
+    } catch (error) {
       next(error);
     }
   },

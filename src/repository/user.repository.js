@@ -115,5 +115,10 @@ const userRepository = {
       reviewCount: row.yorum_sayisi,
     };
   },
+  async exists(id) {
+    const query = "SELECT EXISTS(SELECT 1 FROM kullanicilar WHERE id = $1)";
+    const result = await db.query(query, [id]);
+    return result.rows[0].exists;
+  },
 };
 module.exports = userRepository;
