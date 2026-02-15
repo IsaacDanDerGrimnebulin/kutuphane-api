@@ -1,1 +1,1 @@
-# Simple Library App
+# Simple book review API
