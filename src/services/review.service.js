@@ -176,6 +176,32 @@ const reviewService = {
       },
     };
   },
+  async getLikedReviewsByUserId(queryParams) {
+    const { ownerId, userId, page = 1, limit = 10 } = queryParams;
+
+    const offset = (page - 1) * limit;
+
+    const exists = await userRepository.exists(userId);
+    if (!exists) {
+      return { errorType: "USER_NOT_FOUND", data: null };
+    }
+
+    const [reviews, totalCount] = await Promise.all([
+      reviewRepository.getLikedReviewsByUserId(ownerId, userId, limit, offset),
+      reviewRepository.getLikedReviewsCountByUserId(userId),
+    ]);
+
+    const totalPages = Math.ceil(totalCount / limit);
+
+    return {
+      reviews: reviews,
+      pagination: {
+        totalCount,
+        totalPages,
+        currentPage: page,
+      },
+    };
+  },
 };
 
 module.exports = reviewService;

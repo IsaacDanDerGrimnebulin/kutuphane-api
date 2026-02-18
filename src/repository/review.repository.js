@@ -259,8 +259,66 @@ const reviewRepository = {
     });
     return resultDAL;
   },
+  async getLikedReviewsByUserId(ownerId, userId, limit, offset) {
+    const query = `SELECT
+                    i.id AS review_id,
+                    i.kullanici_id AS reviewer_id,
+                    k.kullanici_adi AS reviewer_username,
+                    i.puan AS review_point,
+                    i.yorum_metni AS review_text,
+                    i.tarih AS created_at,
+                    i.begeni_sayisi AS like_count,
+                    ki.id AS book_id,
+                    ki.kitap_adi AS book_name,
+                    y.id AS author_id,
+                    y.yazar_adi AS author_name,
+                    (auth_begenisi.kullanici_id IS NOT NULL) AS is_liked
+                    FROM incelemeler i
+                    JOIN kitaplar ki ON ki.id = i.kitap_id
+                    JOIN yazarlar y ON y.id = ki.yazar_id
+                    JOIN inceleme_begenileri ib ON i.id = ib.inceleme_id
+                    JOIN kullanicilar k ON i.kullanici_id = k.id
+                    LEFT JOIN inceleme_begenileri auth_begenisi
+                      ON auth_begenisi.inceleme_id = i.id
+                        AND auth_begenisi.kullanici_id = $1
+                    WHERE ib.kullanici_id = $2 -- profil sahibi
+                     LIMIT $3 OFFSET $4
+                    `;
+    const values = [ownerId, userId, limit, offset];
+    const result = await db.query(query, values);
+    const resultDAL = result.rows.map((row) => {
+      return {
+        review_id: row.review_id,
+        rating: row.review_point,
+        comment: row.review_text,
+        created_at: row.created_at,
+        is_liked: row.is_liked,
+        like_count: row.like_count,
+        book: {
+          id: row.book_id,
+          name: row.book_name,
+        },
+        author: {
+          id: row.author_id,
+          name: row.author_name,
+        },
+        user: {
+          id: row.reviewer_id,
+          name: row.reviewer_username,
+        },
+      };
+    });
+    return resultDAL;
+  },
+
   async getReviewCountByUserId(userId) {
     const query = `SELECT COUNT(*)::INT FROM incelemeler
+                    WHERE kullanici_id = $1`;
+    const result = await db.query(query, [userId]);
+    return Number(result.rows[0].count);
+  },
+  async getLikedReviewsCountByUserId(userId) {
+    const query = `SELECT COUNT(*)::INT FROM inceleme_begenileri
                     WHERE kullanici_id = $1`;
     const result = await db.query(query, [userId]);
     return Number(result.rows[0].count);

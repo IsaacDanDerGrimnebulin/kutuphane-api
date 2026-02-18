@@ -21,5 +21,10 @@ router.get(
   authenticateToken.authenticateToken,
   reviewController.getAllReviewsByUserId,
 );
+router.get(
+  "/:id/likes",
+  authenticateToken.authenticateToken,
+  reviewController.getLikedReviewsByUserId,
+);
 
 module.exports = router;
