@@ -292,7 +292,7 @@ const reviewRepository = {
         rating: row.review_point,
         comment: row.review_text,
         created_at: row.created_at,
-        is_liked: row.is_liked,
+        isLiked: row.is_liked,
         like_count: row.like_count,
         book: {
           id: row.book_id,
