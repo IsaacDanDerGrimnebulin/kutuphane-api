@@ -282,6 +282,7 @@ const reviewRepository = {
                       ON auth_begenisi.inceleme_id = i.id
                         AND auth_begenisi.kullanici_id = $1
                     WHERE ib.kullanici_id = $2 -- profil sahibi
+                    ORDER BY ib.created_at DESC
                      LIMIT $3 OFFSET $4
                     `;
     const values = [ownerId, userId, limit, offset];
