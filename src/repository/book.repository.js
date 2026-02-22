@@ -2,7 +2,7 @@ const db = require("../config/db");
 
 const bookRepository = {
   // Tek bir kitabı tüm detaylarıyla getirir
-
+  // TODO: remove fiyat columns
   async findById(id) {
     const query = `
              SELECT 
@@ -93,6 +93,37 @@ const bookRepository = {
     const query = "SELECT EXISTS(SELECT 1 FROM kitaplar WHERE id = $1)";
     const result = await db.query(query, [id]);
     return result.rows[0].exists; // true veya false döner
+  },
+  async findReviewedByUser(userId, limit, offset) {
+    const query = `SELECT 
+                  k.id AS kitap_id, 
+                  k.kitap_adi,
+                   k.cover_url,
+                  (SELECT ROUND(AVG(puan)::numeric, 2) 
+                  FROM incelemeler 
+                  WHERE kitap_id = k.id) AS genel_ortalama_puan
+              FROM incelemeler i 
+              JOIN kitaplar k ON i.kitap_id = k.id 
+              WHERE i.kullanici_id = $1
+              ORDER BY i.tarih DESC
+              LIMIT $2 OFFSET $3`;
+    const result = await db.query(query, [userId, limit, offset]);
+    const resultDAL = result.rows.map((row) => {
+      return {
+        id: row.kitap_id,
+        kitap_adi: row.kitap_adi,
+        cover_url: row.cover_url,
+        ortalama_puan: Number(row.genel_ortalama_puan),
+      };
+    });
+    return resultDAL;
+  },
+  async findCountReviewedByUser(userId) {
+    const query = `SELECT COUNT(*) FROM incelemeler i 
+                      JOIN  kitaplar k ON i.kitap_id = k.id
+                      WHERE i.kullanici_id=$1`;
+    const result = await db.query(query, [userId]);
+    return Number(result.rows[0].count);
   },
 };
 
