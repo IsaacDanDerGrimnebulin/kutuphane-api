@@ -10,7 +10,7 @@ const bookController = {
         throw new CustomError(
           "Aradığınız kitap bulunamadı.",
           404,
-          "BOOK_NOT_FOUND"
+          "BOOK_NOT_FOUND",
         );
       }
       res.status(200).json({
@@ -48,6 +48,39 @@ const bookController = {
         message: "Kitaplar başarıyla getirildi",
         metadata: result.pagination, // Sayfalama bilgileri
         data: result.books, // Kitap listesi
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+  async getRevieweBooksdByUser(req, res, next) {
+    try {
+      // TODO: move pagination control to a brand new middleware to control endpoints return list.
+      const { page, limit } = req.query;
+      const ownerId = req.user.id;
+      const userId = req.params.id;
+
+      const finalLimit = Math.min(Math.max(parseInt(limit) || 10, 1), 10);
+      const finalPage = Math.max(parseInt(page) || 1, 1);
+      const queryParams = {
+        userId: userId,
+        page: finalPage,
+        limit: finalLimit,
+      };
+
+      // 2. Servis katmanını çağır
+      const result = await bookService.getRevieweBooksdByUser(queryParams);
+
+      if (result.errorType === "USER_NOT_FOUND") {
+        throw new CustomError("Kullanıcı bulunamadı", 404, "USER_NOT_FOUND");
+      }
+      const isOwner = String(ownerId) === String(userId);
+      res.status(200).json({
+        success: true,
+        message: "Kitaplar başarıyla getirildi",
+        metadata: result.pagination,
+        data: result.books,
+        isOwner: isOwner,
       });
     } catch (error) {
       next(error);

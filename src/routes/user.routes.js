@@ -4,6 +4,7 @@ const router = express.Router({ mergeParams: true });
 const authenticateToken = require("../middlewares/auth.middleware");
 const userController = require("../controllers/user.controller");
 const reviewController = require("../controllers/review.controller");
+const bookController = require("../controllers/book.controller");
 
 router.get("/me", authenticateToken.authenticateToken, userController.getMe);
 router.get(
@@ -25,6 +26,11 @@ router.get(
   "/:id/likes",
   authenticateToken.authenticateToken,
   reviewController.getLikedReviewsByUserId,
+);
+router.get(
+  "/:id/books",
+  authenticateToken.authenticateToken,
+  bookController.getRevieweBooksdByUser,
 );
 
 module.exports = router;
