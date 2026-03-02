@@ -18,7 +18,7 @@ const authRepository = {
     };
   },
   async findUserByEmail(email) {
-    const query = `SELECT id, kullanici_adi, email, password_hash 
+    const query = `SELECT id, kullanici_adi, email, password_hash,role 
                     FROM kullanicilar
                     WHERE email = $1`;
     const result = await db.query(query, [email]);
@@ -30,6 +30,7 @@ const authRepository = {
       username: row.kullanici_adi,
       email: row.email,
       password_hash: row.password_hash,
+      role: row.role,
     };
   },
 };

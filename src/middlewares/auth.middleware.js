@@ -30,5 +30,20 @@ const authMiddleware = {
       next(); // Bir sonraki fonksiyona (Dashboard rotasına) geç
     });
   },
+  authorize(allowedRoles) {
+    return (req, res, next) => {
+      // req.user, üstteki authenticate middleware'inden geliyor
+      if (!req.user || !allowedRoles.includes(req.user.role)) {
+        return res.status(403).json({
+          success: false,
+          error: "Bu işlem için yetkiniz bulunmuyor.",
+          errorType: "AUTHORIZATION_ERROR",
+          data: null,
+        });
+      }
+
+      next(); // Yetki tamamsa bir sonraki fonksiyona geç
+    };
+  },
 };
 module.exports = authMiddleware;
