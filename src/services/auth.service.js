@@ -36,7 +36,7 @@ const authService = {
     const newUser = await authRepository.createUser(
       kullanici_adi,
       email,
-      password_hash
+      password_hash,
     );
     if (!newUser) {
       return {
@@ -79,7 +79,7 @@ const authService = {
     // Şifreyi kontrol et.
     const passwordMatch = await bcrypt.compareSync(
       password,
-      user.password_hash
+      user.password_hash,
     );
 
     if (!passwordMatch) {
@@ -90,9 +90,9 @@ const authService = {
       };
     }
     const generatedToken = jwt.sign(
-      { id: user.id, username: user.username },
+      { id: user.id, username: user.username, role: user.role },
       process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN }
+      { expiresIn: process.env.JWT_EXPIRES_IN },
     );
 
     return {
@@ -101,6 +101,7 @@ const authService = {
         id: user.id,
         username: user.username,
         email: user.email,
+        role: user.role,
       },
       token: generatedToken, // Buraya da JWT gelecek
     };
