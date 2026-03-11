@@ -125,6 +125,11 @@ const bookRepository = {
     const result = await db.query(query, [userId]);
     return Number(result.rows[0].count);
   },
+  async total() {
+    const query = `SELECT COUNT(*) FROM kitaplar`;
+    const result = await db.query(query);
+    return Number(result.rows[0].count);
+  },
 };
 
 module.exports = bookRepository;

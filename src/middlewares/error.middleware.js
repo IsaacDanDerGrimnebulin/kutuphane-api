@@ -5,7 +5,7 @@ const errorMiddleware = {
     const error = new CustomError(
       `Can't find ${req.originalUrl} on this server!`,
       404,
-      "404_NOT_FOUND"
+      "404_NOT_FOUND",
     );
     next(error);
   },

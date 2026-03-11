@@ -324,5 +324,11 @@ const reviewRepository = {
     const result = await db.query(query, [userId]);
     return Number(result.rows[0].count);
   },
+  async getAverageRating() {
+    const query =
+      "SELECT ROUND(AVG(puan)::numeric, 2) as average_rating FROM incelemeler";
+    const result = await db.query(query);
+    return Number(result.rows[0].average_rating);
+  },
 };
 module.exports = reviewRepository;
