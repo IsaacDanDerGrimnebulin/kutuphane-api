@@ -57,19 +57,11 @@ const userController = {
 
       const user = await userService.getUserProfileByUserId(reqId);
 
-      if (!user || user.errorType === "USER_NOT_FOUND") {
-        throw new CustomError(
-          "Kullanıcı profili bulunamadı.",
-          404,
-          "AUTHOR_NOT_FOUND",
-        );
-      }
-
       const isOwner = String(ownerId) === String(reqId);
       res.status(200).json({
         success: true,
         message: "Kullanıcı profili başarıyla getirildi",
-        data: user.data,
+        data: user,
         isOwner: isOwner,
       });
     } catch (error) {
