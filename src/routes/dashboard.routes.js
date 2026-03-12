@@ -14,5 +14,11 @@ router.get(
   authorize(["admin"]),
   dashboardController.getStats,
 );
+router.get(
+  "/charts",
+  authenticateToken,
+  authorize(["admin"]),
+  dashboardController.getCharts,
+);
 
 module.exports = router;

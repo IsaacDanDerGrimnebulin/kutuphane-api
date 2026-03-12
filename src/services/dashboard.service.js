@@ -24,7 +24,23 @@ const dashboardService = {
     }
     return { totalBooks, totalReviews, averageRating };
   },
-  async getCharts() {},
+  async getCharts() {
+    const [reviewDistribution, popularGenres] = await Promise.all([
+      safePromise(reviewRepository.getDailyReviewCountsLast30Days(), []),
+      safePromise(reviewRepository.findMostPopularCategories(), []),
+
+      //safePromise(Promise.reject(new Error("Test fail")), []),
+    ]);
+
+    if (reviewDistribution === null && popularGenres === null) {
+      throw new CustomError(
+        "Charts verileri getirilemedi",
+        500,
+        "CHARTS_DATA_UNAVAILABLE",
+      );
+    }
+    return { reviewDistribution, popularGenres };
+  },
   async getTopList() {},
   async getActivity() {},
 };

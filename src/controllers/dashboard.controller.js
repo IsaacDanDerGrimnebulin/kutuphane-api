@@ -13,5 +13,17 @@ const dashboardController = {
       next(error);
     }
   },
+  async getCharts(req, res, next) {
+    try {
+      const charts = await dashboardService.getCharts();
+      res.status(200).json({
+        success: true,
+        message: "Dashboard charts verileri başarıyla getirildi",
+        data: charts,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
 };
 module.exports = dashboardController;

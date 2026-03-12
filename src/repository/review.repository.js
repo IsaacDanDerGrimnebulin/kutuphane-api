@@ -330,5 +330,41 @@ const reviewRepository = {
     const result = await db.query(query);
     return Number(result.rows[0].average_rating);
   },
+  // TODO: make the day value dynamic if needed
+  async getDailyReviewCountsLast30Days() {
+    const query = `SELECT
+                        DATE(tarih) AS day,
+                        COUNT(*) AS count
+                    FROM incelemeler
+                    WHERE tarih >= NOW() - INTERVAL '30 days'
+                    GROUP BY day
+                    ORDER BY day`;
+    const result = await db.query(query);
+    const data = result.rows.map((row) => {
+      return {
+        day: row.day,
+        count: Number(row.count),
+      };
+    });
+    return data;
+  },
+  // TODO: make limit dynamic if needed
+  async findMostPopularCategories() {
+    const query = `SELECT ka.ad AS genre, COUNT(i.id) AS review_count
+                      FROM incelemeler i
+                      JOIN kitaplar k ON i.kitap_id = k.id
+                      JOIN kategoriler ka ON k.kategori_id = ka.id
+                      GROUP BY ka.ad
+                      ORDER BY review_count DESC
+                      LIMIT 5`;
+    const result = await db.query(query);
+    const data = result.rows.map((row) => {
+      return {
+        genre: row.genre,
+        count: Number(row.review_count),
+      };
+    });
+    return data;
+  },
 };
 module.exports = reviewRepository;
