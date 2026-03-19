@@ -24,8 +24,16 @@ const authorRepository = {
     return resultDAL;
   },
   async findById(id) {
-    const query = `SELECT * FROM yazarlar 
-                   WHERE id = $1`;
+    const query = `SELECT 
+                        y.*,
+                        COALESCE(ROUND(AVG(i.puan)::numeric, 2), 0) AS avg_rating,
+                        COUNT(DISTINCT i.id) AS total_reviews,
+                        COUNT(DISTINCT k.id) AS total_books_count
+                    FROM yazarlar y
+                    LEFT JOIN kitaplar k ON k.yazar_id = y.id
+                    LEFT JOIN incelemeler i ON k.id = i.kitap_id 
+                    WHERE y.id = $1
+                    GROUP BY y.id, y.yazar_adi`;
     const result = await db.query(query, [id]);
     const row = result.rows[0];
     if (!row) return null;
