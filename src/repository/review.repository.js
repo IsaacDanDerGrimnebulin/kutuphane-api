@@ -1,10 +1,12 @@
 const db = require("../config/db");
 
 const reviewRepository = {
+  // UPDATED: like_count behavior has changed - DONE
   async findByBookId(userId, bookId, limit, offset) {
     const query = `
               SELECT i.*, k.kullanici_adi,
-              i.begeni_sayisi AS "likeCount",
+              	(SELECT COUNT(*) FROM inceleme_begenileri
+					WHERE inceleme_id = i.id) AS like_count,
               EXISTS (
                 SELECT 1 FROM inceleme_begenileri
                   WHERE inceleme_id = i.id AND kullanici_id = $1
@@ -25,7 +27,7 @@ const reviewRepository = {
         comment: row.yorum_metni,
         created_at: row.tarih,
         isLiked: row.isLiked,
-        likeCount: row.likeCount,
+        likeCount: row.like_count,
         user: {
           id: row.kullanici_id,
           username: row.kullanici_adi,
@@ -128,13 +130,15 @@ const reviewRepository = {
       created_at: row.tarih,
     };
   },
+  // UPDATED: like_count behavior has changed - DONE
   async getAllReviews(userId, limit, offset) {
     const query = `SELECT 
                     i.id AS inceleme_id,
                     i.yorum_metni,
                     i.puan,
                     i.tarih AS created_at,
-					          i.begeni_sayisi AS "like_count",
+                    (SELECT COUNT(*) FROM inceleme_begenileri
+					            WHERE inceleme_id = i.id)  AS "like_count",
                     k.id AS kitap_id,
                     k.kitap_adi,
                     y.id AS yazar_id,
@@ -209,13 +213,15 @@ const reviewRepository = {
 
     return result.rows[0].exists;
   },
+  // UPDATED: like_count behavior has changed - DONE
   async getAllReviewByUserId(ownerId, userId, limit, offset) {
     const query = `SELECT 
                     i.id AS inceleme_id,
                     i.yorum_metni,
                     i.puan,
                     i.tarih AS created_at,
-					i.begeni_sayisi AS "like_count",
+                    (SELECT COUNT(*) FROM inceleme_begenileri
+					WHERE inceleme_id = i.id)  AS "like_count",
                     k.id AS kitap_id,
                     k.kitap_adi,
                     y.id AS yazar_id,
@@ -259,6 +265,7 @@ const reviewRepository = {
     });
     return resultDAL;
   },
+  // UPDATED: like_count behavior has changed
   async getLikedReviewsByUserId(ownerId, userId, limit, offset) {
     const query = `SELECT
                     i.id AS review_id,
@@ -267,7 +274,9 @@ const reviewRepository = {
                     i.puan AS review_point,
                     i.yorum_metni AS review_text,
                     i.tarih AS created_at,
-                    i.begeni_sayisi AS like_count,
+                    (SELECT COUNT(*) FROM inceleme_begenileri
+					WHERE inceleme_id = i.id)  AS "like_count",
+                
                     ki.id AS book_id,
                     ki.kitap_adi AS book_name,
                     y.id AS author_id,
