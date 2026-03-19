@@ -55,7 +55,7 @@ const dashboardService = {
       throw new CustomError(
         "Top List verileri getirilemedi",
         500,
-        "CHARTS_DATA_UNAVAILABLE",
+        "TOPLISTS_DATA_UNAVAILABLE",
       );
     }
     return { highestRated, lowestRated, mostReviewed };
