@@ -25,5 +25,17 @@ const dashboardController = {
       next(error);
     }
   },
+  async getTopLists(req, res, next) {
+    try {
+      const charts = await dashboardService.getTopLists();
+      res.status(200).json({
+        success: true,
+        message: "Dashboard top lists verileri başarıyla getirildi",
+        data: charts,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
 };
 module.exports = dashboardController;

@@ -20,5 +20,11 @@ router.get(
   authorize(["admin"]),
   dashboardController.getCharts,
 );
+router.get(
+  "/lists",
+  authenticateToken,
+  authorize(["admin"]),
+  dashboardController.getTopLists,
+);
 
 module.exports = router;

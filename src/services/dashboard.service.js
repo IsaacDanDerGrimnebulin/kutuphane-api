@@ -41,7 +41,25 @@ const dashboardService = {
     }
     return { reviewDistribution, popularGenres };
   },
-  async getTopList() {},
+  async getTopLists() {
+    const [highestRated, lowestRated, mostReviewed] = await Promise.all([
+      safePromise(bookRepository.findHighestRated(), []),
+      safePromise(bookRepository.findLowestRated(), []),
+      safePromise(bookRepository.findMostReviewed(), []),
+    ]);
+    if (
+      highestRated === null &&
+      lowestRated === null &&
+      mostReviewed === null
+    ) {
+      throw new CustomError(
+        "Top List verileri getirilemedi",
+        500,
+        "CHARTS_DATA_UNAVAILABLE",
+      );
+    }
+    return { highestRated, lowestRated, mostReviewed };
+  },
   async getActivity() {},
 };
 module.exports = dashboardService;
