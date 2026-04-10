@@ -6,8 +6,6 @@ const bookService = {
     const book = await bookRepository.findById(id);
     if (!book) return null;
 
-    // İş Mantığı: Kitap ismini büyük harfe çevir veya özel bir format uygula
-    book.yazar.ad = book.yazar.ad.toUpperCase();
     return book;
   },
   async getAllBooks(queryParams) {

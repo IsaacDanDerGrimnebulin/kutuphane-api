@@ -1,47 +1,44 @@
 const db = require("../config/db");
-
 const bookRepository = {
-  // Tek bir kitabı tüm detaylarıyla getirir
-  // TODO: remove fiyat columns
   async findById(id) {
     const query = `
-             SELECT 
-                  k.id AS kitap_id, 
-                  k.kitap_adi, 
-                  k.fiyat, 
-                  y.id AS yazar_id, 
-                  y.yazar_adi,
-                  kat.id AS kategori_id,
-                  kat.ad AS kategori_adi,
-                  kat.slug AS kategori_slug,
-				      COALESCE(ROUND(AVG(i.puan)::numeric, 2), 0) AS ortalama_puan,
-              COALESCE( COUNT(i.id), 0) AS yorum_sayisi
-              FROM kitaplar k
-              JOIN yazarlar y ON k.yazar_id = y.id
-              JOIN kategoriler kat ON k.kategori_id = kat.id
-			        LEFT JOIN incelemeler i ON k.id = i.kitap_id
-			        WHERE k.id = $1
-			        GROUP BY k.id,y.id,kat.id`;
+            SELECT 
+                  b.id AS book_id, 
+                  b.title AS book_name, 
+                  a.id AS author_id, 
+                  a.full_name AS author_name,
+                  c.id AS category_id,
+                  c.title AS category_title,
+                  c.slug AS category_slug,
+			        COALESCE(ROUND(AVG(r.rating)::numeric, 2), 0) AS average_rating,
+              COALESCE(COUNT(r.id), 0) AS review_count
+              FROM books b
+              JOIN authors a ON b.author_id = a.id
+              JOIN categories c ON b.category_id = c.id
+			        LEFT JOIN reviews r ON b.id = r.book_id
+			        WHERE b.id = $1
+			        GROUP BY b.id,a.id,c.id`;
     const result = await db.query(query, [id]);
     const row = result.rows[0];
     if (!row) return null;
     const resultDAL = {
-      id: row.kitap_id, // Artık k.id ile çakışmıyor!
-      kitap_adi: row.kitap_adi,
-      ortalama_puan: Number(row.ortalama_puan),
-      yorum_sayisi: Number(row.yorum_sayisi),
+      id: row.book_id,
+      kitap_adi: row.book_name,
+      ortalama_puan: Number(row.average_rating),
+      yorum_sayisi: Number(row.review_count),
       yazar: {
-        id: row.yazar_id, // y.id'den gelen değer
-        ad: row.yazar_adi,
+        id: row.author_id,
+        ad: row.author_name,
       },
       kategori: {
-        id: row.kategori_id, // y.id'den gelen değer
-        ad: row.kategori_adi,
-        slug: row.kategori_slug,
+        id: row.category_id,
+        ad: row.category_title,
+        slug: row.category_slug,
       },
     };
     return resultDAL;
   },
+  // TODO: update function with new table names
   async findAll(filters, limit, offset) {
     const query = `SELECT 
                    k.id AS kitap_id, 
@@ -82,7 +79,7 @@ const bookRepository = {
 
     return resultDAL;
   },
-  // 2. Toplam sayıyı getiren sorgu
+  // TODO: update function with new table names
   async countAll(filters) {
     const query = `SELECT COUNT(*) FROM kitaplar WHERE kitap_adi ILIKE $1`;
     const values = [`${filters.q}%`];
