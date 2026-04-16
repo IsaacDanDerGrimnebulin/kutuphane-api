@@ -10,7 +10,7 @@ const authController = {
       res.status(201).json({
         success: true,
         message: "Kullanıcı başarıyla kayıt oldu.",
-        data: result.data,
+        data: result,
       });
     } catch (error) {
       console.log("ERROR: ", error);
