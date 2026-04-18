@@ -21,9 +21,6 @@ const reviewController = {
       // 2. Servis katmanını çağır
       const result = await reviewService.getBookReviewsById(queryParams);
 
-      if (!result) {
-        throw new CustomError("Kitap bulunamadı", 404, "BOOK_NOT_FOUND");
-      }
       res.status(200).json({
         success: true,
         message: "Yorumlar başarıyla getirildi",
@@ -44,37 +41,11 @@ const reviewController = {
       };
 
       const review = await reviewService.createBookReviewByBookId(params);
-      if (review.errorType === "EMPTY_RATING_OR_REVIEW_TEXT") {
-        throw new CustomError(
-          "Puan ve yorum alanı boş bırakılamaz.",
-          400,
-          "EMPTY_RATING_OR_REVIEW_TEXT",
-        );
-      }
-      if (review.errorType === "INVALID_RATING") {
-        throw new CustomError(
-          "Puan 1 ile 5 arasında olmalıdır",
-          400,
-          "INVALID_RATING",
-        );
-      }
-
-      if (review.errorType === "BOOK_NOT_FOUND") {
-        throw new CustomError("Kitap bulunamadı", 404, "BOOK_NOT_FOUND");
-      }
-
-      if (review.errorType === "DATABASE_ERROR") {
-        throw new CustomError(
-          "Kayıt sırasında teknik hata.",
-          500,
-          "DATABASE_ERROR",
-        );
-      }
 
       return res.status(201).json({
         success: true,
         message: "Yorum başarıyla oluşturuldu",
-        data: review.data,
+        data: review,
       });
     } catch (error) {
       // Eğer DB'den UNIQUE kısıtlaması hatası gelirse (örn: email zaten var)

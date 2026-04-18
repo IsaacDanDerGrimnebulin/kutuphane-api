@@ -1,41 +1,40 @@
 const db = require("../config/db");
-
+const { nanoid } = require("nanoid");
 const reviewRepository = {
-  // UPDATED: like_count behavior has changed - DONE
+  // TODO: change columns and title with behaviour
   async findByBookId(userId, bookId, limit, offset) {
-    const query = `
-              SELECT i.*, k.kullanici_adi,
-              	(SELECT COUNT(*) FROM inceleme_begenileri
-					WHERE inceleme_id = i.id) AS like_count,
+    const query = `SELECT r.*, p.username,
+              	(SELECT COUNT(*) FROM likes
+					WHERE review_id = r.id) AS like_count,
               EXISTS (
-                SELECT 1 FROM inceleme_begenileri
-                  WHERE inceleme_id = i.id AND kullanici_id = $1
-              ) AS "isLiked"
-              FROM incelemeler i 
-              JOIN kullanicilar k ON i.kullanici_id = k.id 
-              WHERE i.kitap_id = $2
-              ORDER BY i.tarih DESC 
-              LIMIT $3 OFFSET $4
-       `;
+                SELECT 1 FROM likes
+                  WHERE review_id = r.id AND user_id = $1
+              ) AS is_liked
+              FROM reviews r
+              JOIN users u ON r.user_id = u.id 
+			  JOIN profiles p ON p.user_id = u.id
+              WHERE r.book_id = $2
+              ORDER BY r.created_at DESC 
+              LIMIT $3 OFFSET $4`;
 
     const values = [userId, bookId, limit, offset];
     const result = await db.query(query, values);
-    const resultDAL = result.rows.map((row) => {
+    const results = result.rows.map((row) => {
       return {
         id: row.id,
-        rating: row.puan,
-        comment: row.yorum_metni,
-        created_at: row.tarih,
-        isLiked: row.isLiked,
-        likeCount: row.like_count,
+        rating: row.rating,
+        comment: row.content,
+        created_at: row.created_at,
+        isLiked: row.is_liked,
+        likeCount: Number(row.like_count), // important update dont forget
         user: {
-          id: row.kullanici_id,
-          username: row.kullanici_adi,
+          id: row.user_id,
+          username: row.username,
         },
       };
     });
 
-    return resultDAL; // Yine map() yaparak DAL formatına çevirebilirsin
+    return results;
   },
 
   async getReviewCount() {
@@ -43,18 +42,19 @@ const reviewRepository = {
     const result = await db.query(query, []);
     return Number(result.rows[0].count);
   },
-
+  // TODO: update column title
   async getCountByBookId(bookId) {
-    const query = `SELECT COUNT(*) FROM incelemeler WHERE kitap_id = $1`;
+    const query = `SELECT COUNT(*) FROM reviews WHERE book_id = $1`;
     const result = await db.query(query, [bookId]);
     return Number(result.rows[0].count);
   },
-
+  // TODO: update column with new titles
   async createNewReviewByBookId(reviewData) {
+    const id = nanoid();
     const query =
-      "INSERT INTO incelemeler(kitap_id, kullanici_id, puan, yorum_metni) VALUES ($1, $2, $3, $4) RETURNING *";
+      "INSERT INTO reviews(id,book_id,user_id,content,rating) VALUES ($1, $2, $3, $4, $5) RETURNING *";
     const { kitap_id, kullanici_id, puan, yorum_metni } = reviewData;
-    const values = [kitap_id, kullanici_id, puan, yorum_metni];
+    const values = [id, kitap_id, kullanici_id, yorum_metni, puan];
 
     const result = await db.query(query, values);
     const row = result.rows[0];
@@ -62,11 +62,11 @@ const reviewRepository = {
     if (!row) return null;
     return {
       id: row.id,
-      book_id: row.kitap_id,
-      user_id: row.kullanici_id,
-      rating: row.puan,
-      comment: row.yorum_metni,
-      created_at: row.tarih,
+      book_id: row.book_id,
+      user_id: row.user_id,
+      rating: row.rating,
+      comment: row.content,
+      created_at: row.created_at,
     };
   },
   async deleteReviewById(bookId, reviewId, userId) {
@@ -116,18 +116,20 @@ const reviewRepository = {
     const result = await db.query(query, [id]);
     return result.rows[0].exists; // true veya false döner
   },
+  // TODO: update columns
   async findReviewById(id) {
-    const query = "SELECT * FROM incelemeler WHERE id = $1";
+    //
+    const query = "SELECT * FROM reviews WHERE id = $1";
     const result = await db.query(query, [id]);
     const row = result.rows[0];
     if (!row) return null;
     return {
       id: row.id,
-      book_id: row.kitap_id,
-      user_id: row.kullanici_id,
-      rating: row.puan,
-      comment: row.yorum_metni,
-      created_at: row.tarih,
+      book_id: row.book_id,
+      user_id: row.user_id,
+      rating: row.rating,
+      comment: row.content,
+      created_at: row.created_at,
     };
   },
   // UPDATED: like_count behavior has changed - DONE

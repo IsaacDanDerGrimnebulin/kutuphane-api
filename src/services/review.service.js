@@ -1,6 +1,7 @@
 const bookRepository = require("../repository/book.repository");
 const reviewRepository = require("../repository/review.repository");
 const userRepository = require("../repository/user.repository");
+const CustomError = require("../utils/customError");
 
 const reviewService = {
   async getBookReviewsById(queryParams) {
@@ -8,9 +9,9 @@ const reviewService = {
     const offset = (page - 1) * limit;
     // 1. Kitap var mı kontrol et
     const bookExists = await bookRepository.exists(bookId);
-
+    // Error handling comes from controller.
     if (!bookExists) {
-      return null; // Kitap yoksa direkt null dön, aşağıya hiç bakma
+      throw new CustomError("Kitap bulunamadı", 404, "BOOK_NOT_FOUND"); // Kitap yoksa direkt null dön, aşağıya hiç bakma
     }
     const [reviews, totalCount] = await Promise.all([
       reviewRepository.findByBookId(userId, bookId, limit, offset),
@@ -32,31 +33,40 @@ const reviewService = {
     const { kitap_id, puan, yorum_metni } = reviwData;
     // 0. Kontrol: Body ve Params kontrolleri (Bunlar her zaman yapılmalı!)
     if (!yorum_metni || !puan) {
-      return {
-        errorType: "EMPTY_RATING_OR_REVIEW_TEXT",
-        data: null,
-      };
+      throw new CustomError(
+        "Puan ve yorum alanı boş bırakılamaz.",
+        400,
+        "EMPTY_RATING_OR_REVIEW_TEXT",
+      );
     }
     // 1. Kontrol: Puan geçerli mi?
     if (puan < 1 || puan > 5) {
-      return { errorType: "INVALID_RATING", data: null };
+      throw new CustomError(
+        "Puan 1 ile 5 arasında olmalıdır",
+        400,
+        "INVALID_RATING",
+      );
     }
     const bookExists = await bookRepository.exists(kitap_id);
     // 2. Kontrol: Kitap var mı?
     if (!bookExists) {
-      return { errorType: "BOOK_NOT_FOUND", data: null };
+      throw new CustomError("Kitap bulunamadı", 404, "BOOK_NOT_FOUND");
     }
     // 3. Repository Çağrısı
-    const review = await reviewRepository.createNewReviewByBookId(reviwData);
+    const data = await reviewRepository.createNewReviewByBookId(reviwData);
 
-    // 4. Teknik Kontrol (İstediğin yer burası)
-    if (!review) {
-      // Kitap var ama kayıt başarısız olduysa bu teknik bir sorundur
-      return { errorType: "DATABASE_ERROR", data: null };
+    // 4. Teknik Kontrol
+    if (!data) {
+      throw new CustomError(
+        "Kayıt sırasında teknik hata.",
+        500,
+        "DATABASE_ERROR",
+      );
     }
 
-    return { errorType: null, data: review };
+    return data;
   },
+  // TODO: postpone update
   async deleteReviewById(bookId, reviewId, userId) {
     const deletedReview = await reviewRepository.deleteReviewById(
       bookId,
@@ -69,6 +79,7 @@ const reviewService = {
     }
     return { errorType: null, data: deletedReview };
   },
+  // TODO: update error handling
   async getReviewById(reviewId) {
     const getReview = await reviewRepository.findReviewById(reviewId);
 
@@ -77,6 +88,7 @@ const reviewService = {
     }
     return { errorType: null, data: getReview };
   },
+  // TODO: postpone update
   async updateReview(reviewData) {
     const { reviewId, bookId, userId, puan, yorum_metni } = reviewData;
 
@@ -116,7 +128,7 @@ const reviewService = {
     }
     return { errorType: null, data: updated };
   },
-
+  // TODO: for feed
   async getAllReviews(queryParams) {
     const { userId, page = 1, limit = 10 } = queryParams;
 
