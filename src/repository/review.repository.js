@@ -38,7 +38,7 @@ const reviewRepository = {
   },
 
   async getReviewCount() {
-    const query = `SELECT COUNT(*)::INT FROM incelemeler`;
+    const query = `SELECT COUNT(*)::INT FROM reviews`;
     const result = await db.query(query, []);
     return Number(result.rows[0].count);
   },
@@ -135,51 +135,52 @@ const reviewRepository = {
   // UPDATED: like_count behavior has changed - DONE
   async getAllReviews(userId, limit, offset) {
     const query = `SELECT 
-                    i.id AS inceleme_id,
-                    i.yorum_metni,
-                    i.puan,
-                    i.tarih AS created_at,
-                    (SELECT COUNT(*) FROM inceleme_begenileri
-					            WHERE inceleme_id = i.id)  AS "like_count",
-                    k.id AS kitap_id,
-                    k.kitap_adi,
-                    y.id AS yazar_id,
-                    y.yazar_adi,
-                    ku.id AS kullanici_id,
-                    ku.kullanici_adi,
-					EXISTS (SELECT 1 FROM inceleme_begenileri
-					WHERE inceleme_id = i.id AND kullanici_id = $1) AS "isLiked"
-                FROM incelemeler i
-                JOIN kitaplar k ON k.id = i.kitap_id
-                JOIN kullanicilar ku ON ku.id = i.kullanici_id
-                JOIN yazarlar y ON y.id = k.yazar_id
-                ORDER BY i.tarih DESC
+                    r.id AS review_id,
+                    r.content,
+                    r.rating,
+                    r.created_at,
+                    (SELECT COUNT(*) FROM likes
+					            WHERE review_id = r.id)  AS "like_count",
+                    b.id AS book_id,
+                    b.title,
+                    a.id AS author_id,
+                    a.full_name,
+                    u.id AS user_id,
+                    p.username,
+					EXISTS (SELECT 1 FROM likes
+					WHERE review_id = r.id AND user_id = $1) AS "is_liked"
+                FROM reviews r
+                JOIN books b ON b.id = r.book_id
+                JOIN users u ON u.id = r.user_id
+				JOIN profiles p ON u.id = p.user_id
+                JOIN authors a ON a.id = b.author_id
+                ORDER BY r.created_at DESC
                 LIMIT $2 OFFSET $3`;
     const values = [userId, limit, offset];
     const result = await db.query(query, values);
-    const resultDAL = result.rows.map((row) => {
+    const results = result.rows.map((row) => {
       return {
-        review_id: row.inceleme_id,
-        rating: row.puan,
-        comment: row.yorum_metni,
+        review_id: row.review_id,
+        rating: row.rating,
+        comment: row.content,
         created_at: row.created_at,
-        isLiked: row.isLiked,
+        isLiked: row.is_liked,
         like_count: row.like_count,
         book: {
-          id: row.kitap_id,
-          name: row.kitap_adi,
+          id: row.book_id,
+          name: row.title,
         },
         author: {
-          id: row.yazar_id,
-          name: row.yazar_adi,
+          id: row.author_id,
+          name: row.full_name,
         },
         user: {
-          id: row.kullanici_id,
-          name: row.kullanici_adi,
+          id: row.user_id,
+          name: row.username,
         },
       };
     });
-    return resultDAL;
+    return results;
   },
   async addReviewLike(userId, reviewId) {
     const query = `INSERT INTO inceleme_begenileri (kullanici_id, inceleme_id) VALUES ($1, $2) RETURNING *`;
