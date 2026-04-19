@@ -115,8 +115,9 @@ const userRepository = {
       reviewCount: row.yorum_sayisi,
     };
   },
+  // TODO: update function with new table names
   async exists(id) {
-    const query = "SELECT EXISTS(SELECT 1 FROM kullanicilar WHERE id = $1)";
+    const query = "SELECT EXISTS(SELECT 1 FROM users WHERE id = $1)";
     const result = await db.query(query, [id]);
     return result.rows[0].exists;
   },

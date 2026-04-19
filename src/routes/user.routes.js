@@ -30,7 +30,7 @@ router.get(
 router.get(
   "/:id/books",
   authenticateToken.authenticateToken,
-  bookController.getRevieweBooksdByUser,
+  bookController.getReviewedBooksByUser,
 );
 
 module.exports = router;

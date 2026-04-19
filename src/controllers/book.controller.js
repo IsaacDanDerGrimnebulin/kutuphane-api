@@ -53,7 +53,7 @@ const bookController = {
       next(error);
     }
   },
-  async getRevieweBooksdByUser(req, res, next) {
+  async getReviewedBooksByUser(req, res, next) {
     try {
       // TODO: move pagination control to a brand new middleware to control endpoints return list.
       const { page, limit } = req.query;
@@ -69,11 +69,8 @@ const bookController = {
       };
 
       // 2. Servis katmanını çağır
-      const result = await bookService.getRevieweBooksdByUser(queryParams);
+      const result = await bookService.getReviewedBooksByUser(queryParams);
 
-      if (result.errorType === "USER_NOT_FOUND") {
-        throw new CustomError("Kullanıcı bulunamadı", 404, "USER_NOT_FOUND");
-      }
       const isOwner = String(ownerId) === String(userId);
       res.status(200).json({
         success: true,

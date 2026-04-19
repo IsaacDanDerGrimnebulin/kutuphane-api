@@ -1,5 +1,6 @@
 const bookRepository = require("../repository/book.repository");
 const userRepository = require("../repository/user.repository");
+const CustomError = require("../utils/customError");
 
 const bookService = {
   async getBookDetails(id) {
@@ -31,14 +32,14 @@ const bookService = {
       },
     };
   },
-  async getRevieweBooksdByUser(queryParams) {
+  async getReviewedBooksByUser(queryParams) {
     const { userId, page = 1, limit = 10 } = queryParams;
 
     const offset = (page - 1) * limit;
 
     const exists = await userRepository.exists(userId);
     if (!exists) {
-      return { errorType: "USER_NOT_FOUND", data: null };
+      throw new CustomError("Kullanıcı bulunamadı", 404, "USER_NOT_FOUND");
     }
 
     const [books, totalCount] = await Promise.all([
