@@ -6,17 +6,10 @@ const authorController = {
     try {
       const author = await authorService.getAuthorDetails(req.params.id);
 
-      if (author.errorType === "AUTHOR_INFO_NOT_FOUND") {
-        throw new CustomError(
-          "Aradığınız yazar bulunamadı.",
-          404,
-          "AUTHOR_NOT_FOUND",
-        );
-      }
       res.status(200).json({
         success: true,
         message: "Yazar başarıyla getirildi",
-        data: author.data,
+        data: author,
       });
     } catch (error) {
       next(error);
@@ -38,15 +31,6 @@ const authorController = {
         authorId,
         queryParams,
       );
-
-      if (result.errorType === "AUTHOR_INFO_NOT_FOUND") {
-        console.log("HATA");
-        throw new CustomError(
-          "Aradığınız yazar bulunamadı.",
-          404,
-          "AUTHOR_NOT_FOUND",
-        );
-      }
 
       res.status(200).json({
         success: true,

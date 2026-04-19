@@ -1,4 +1,5 @@
 const authorRepository = require("../repository/author.repository");
+const CustomError = require("../utils/customError");
 
 const authorService = {
   async getAuthorDetails(id) {
@@ -6,18 +7,19 @@ const authorService = {
     const author = await authorRepository.findById(id);
 
     if (!author) {
-      return { errorType: "AUTHOR_INFO_NOT_FOUND", data: null };
+      throw new CustomError(
+        "Aradığınız yazar bulunamadı.",
+        404,
+        "AUTHOR_NOT_FOUND",
+      );
     }
 
     // Yazar varsa kitapları çek
     const highlightedBooks = await authorRepository.findHighlightedBooks(id);
 
     return {
-      data: {
-        author: author,
-        highlightedBooks: highlightedBooks || [],
-      },
-      errorType: null,
+      author: author,
+      highlightedBooks: highlightedBooks || [],
     };
   },
   async getAllBooksByAuthorId(authorId, queryParams) {
@@ -28,7 +30,11 @@ const authorService = {
     const exists = await authorRepository.exists(authorId);
 
     if (!exists) {
-      return { errorType: "AUTHOR_INFO_NOT_FOUND", data: null };
+      throw new CustomError(
+        "Aradığınız yazar bulunamadı.",
+        404,
+        "AUTHOR_NOT_FOUND",
+      );
     }
     const [books, totalCount] = await Promise.all([
       authorRepository.findAll(authorId, limit, offset),
@@ -44,7 +50,6 @@ const authorService = {
         totalPages,
         currentPage: page,
       },
-      errorType: null,
     };
   },
 };
