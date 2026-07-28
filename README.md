@@ -1,5 +1,9 @@
 # 📚 Kütüphane API (Book Review API)
 
+> [!NOTE]
+> **Knex.js migrations** entegrasyonu devam etmektedir.
+> Veritabanı yapısı, migration dosyaları ve kurulum adımları güncellenmektedir. Bu süreçte README'deki bazı veritabanı talimatları geçici olarak eski kalabilir.
+
 Bu proje, kitap incelemeleri ve yönetimi için geliştirilmiş, **PERN (PostgreSQL, Express, React, Node.js)** yığını kullanılarak inşa edilmiş bir RESTful API çalışmasıdır. Geliştirilmeye devam ediyor.
 
 ## 🚀 Projenin Amacı
