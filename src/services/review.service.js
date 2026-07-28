@@ -169,7 +169,7 @@ const reviewService = {
 
     const exists = await userRepository.exists(userId);
     if (!exists) {
-      return { errorType: "USER_NOT_FOUND", data: null };
+      throw new CustomError("Kullanıcı bulunamadı", 404, "USER_NOT_FOUND");
     }
 
     const [reviews, totalCount] = await Promise.all([

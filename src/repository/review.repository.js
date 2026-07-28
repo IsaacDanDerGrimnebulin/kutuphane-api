@@ -219,50 +219,51 @@ const reviewRepository = {
   // UPDATED: like_count behavior has changed - DONE
   async getAllReviewByUserId(ownerId, userId, limit, offset) {
     const query = `SELECT 
-                    i.id AS inceleme_id,
-                    i.yorum_metni,
-                    i.puan,
-                    i.tarih AS created_at,
-                    (SELECT COUNT(*) FROM inceleme_begenileri
-					WHERE inceleme_id = i.id)  AS "like_count",
-                    k.id AS kitap_id,
-                    k.kitap_adi,
-                    y.id AS yazar_id,
-                    y.yazar_adi,
-                    ku.id AS kullanici_id,
-                    ku.kullanici_adi,
-					EXISTS (SELECT 1 FROM inceleme_begenileri
+                    r.id AS review_id,
+                    r.content,
+                    r.rating,
+                    r.created_at AS created_at,
+                    (SELECT COUNT(*) FROM likes
+					WHERE review_id = r.id)  AS like_count,
+                    b.id AS book_id,
+                    b.title AS book_name,
+                    a.id AS author_id,
+                    a.full_name AS author_name,
+                    u.id AS user_id,
+                    p.username,
+					EXISTS (SELECT 1 FROM likes
 					-- $1 login olan kimse auth üzerinden id al
-					WHERE inceleme_id = i.id AND kullanici_id = $1) AS "isLiked"
-                FROM incelemeler i
-                JOIN kitaplar k ON k.id = i.kitap_id
-                JOIN kullanicilar ku ON ku.id = i.kullanici_id
-                JOIN yazarlar y ON y.id = k.yazar_id
-                WHERE i.kullanici_id = $2
-                ORDER BY i.tarih DESC
+					WHERE review_id = r.id AND user_id = $1) AS is_liked
+                FROM reviews r
+                JOIN books b ON b.id = r.book_id
+                JOIN users u ON u.id = r.user_id
+				JOIN profiles p ON p.user_id = u.id
+                JOIN authors a ON a.id = b.author_id
+                WHERE r.user_id = $2
+                ORDER BY r.created_at DESC
 				-- Burası profiline bakılan kimse param olarak id al
                 LIMIT $3 OFFSET $4`;
     const values = [ownerId, userId, limit, offset];
     const result = await db.query(query, values);
     const resultDAL = result.rows.map((row) => {
       return {
-        review_id: row.inceleme_id,
-        rating: row.puan,
-        comment: row.yorum_metni,
+        review_id: row.review_id,
+        rating: row.rating,
+        comment: row.content,
         created_at: row.created_at,
-        isLiked: row.isLiked,
+        isLiked: row.is_liked,
         like_count: row.like_count,
         book: {
-          id: row.kitap_id,
-          name: row.kitap_adi,
+          id: row.book_id,
+          name: row.book_name,
         },
         author: {
-          id: row.yazar_id,
-          name: row.yazar_adi,
+          id: row.author_id,
+          name: row.author_name,
         },
         user: {
-          id: row.kullanici_id,
-          name: row.kullanici_adi,
+          id: row.user_id,
+          name: row.username,
         },
       };
     });
@@ -325,8 +326,8 @@ const reviewRepository = {
   },
 
   async getReviewCountByUserId(userId) {
-    const query = `SELECT COUNT(*)::INT FROM incelemeler
-                    WHERE kullanici_id = $1`;
+    const query = `SELECT COUNT(*)::INT FROM users
+                    WHERE id = $1`;
     const result = await db.query(query, [userId]);
     return Number(result.rows[0].count);
   },

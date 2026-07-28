@@ -79,22 +79,23 @@ const userRepository = {
     return Number(result.rows[0].count);
   },
   async findProfileByUserId(userId) {
-    const query = `SELECT k.id,k.kullanici_adi,
-                          p.ad,
-                          p.soyad,
+    const query = `SELECT	u.id,
+						              p.username,
+                          p.first_name,
+                          p.last_name,
                           p.bio,
                           p.avatar_url,
                           p.banner_url,
-                          k.created_at,
-                          p.dogum_tarihi,
-                          COALESCE(ROUND(AVG(i.puan)::numeric, 2), 0) AS ortalama_puan,
-                          COALESCE(COUNT(i.id), 0) AS yorum_sayisi
-                        FROM kullanicilar k
-                        JOIN profil p ON p.kullanici_id = k.id
-                        LEFT JOIN incelemeler i ON i.kullanici_id = k.id
-                        WHERE k.id = $1
+                          p.created_at,
+                          p.birth_date,
+                          COALESCE(ROUND(AVG(r.rating)::numeric, 2), 0) AS ortalama_puan,
+                          COALESCE(COUNT(r.id), 0) AS yorum_sayisi
+                        FROM users u
+                        JOIN profiles p ON p.user_id = u.id
+                        LEFT JOIN reviews r ON r.user_id = u.id
+                        WHERE u.id = $1
                         GROUP BY
-                          k.id,
+                          u.id,
                           p.id`;
     const result = await db.query(query, [userId]);
     const row = result.rows[0];
@@ -103,16 +104,16 @@ const userRepository = {
 
     return {
       userid: row.id,
-      username: row.kullanici_adi,
-      first_name: row.ad,
-      last_name: row.soyad,
+      username: row.username,
+      first_name: row.first_name,
+      last_name: row.last_name,
       bio: row.bio,
       avatar_url: row.avatar_url,
       banner_url: row.banner_url,
       joinDate: row.created_at,
-      birthDate: row.dogum_tarihi,
-      reviewAvg: row.ortalama_puan,
-      reviewCount: row.yorum_sayisi,
+      birthDate: row.birth_date,
+      reviewAvg: Number(row.ortalama_puan),
+      reviewCount: Number(row.yorum_sayisi),
     };
   },
   // TODO: update function with new table names

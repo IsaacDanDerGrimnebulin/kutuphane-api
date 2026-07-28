@@ -214,9 +214,6 @@ const reviewController = {
       // 2. Servis katmanını çağır
       const result = await reviewService.getAllReviewsByUserId(queryParams);
 
-      if (result.errorType === "USER_NOT_FOUND") {
-        throw new CustomError("Kullanıcı bulunamadı", 404, "USER_NOT_FOUND");
-      }
       const isOwner = String(ownerId) === String(userId);
       res.status(200).json({
         success: true,
