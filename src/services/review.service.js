@@ -66,67 +66,118 @@ const reviewService = {
 
     return data;
   },
-  // TODO: postpone update
-  async deleteReviewById(bookId, reviewId, userId) {
-    const deletedReview = await reviewRepository.deleteReviewById(
-      bookId,
-      reviewId,
-      userId,
-    );
-    //console.log(bookId, reviewId, userId);
-    if (!deletedReview) {
-      return { errorType: "REVIEW_NOT_FOUND", data: null };
-    }
-    return { errorType: null, data: deletedReview };
-  },
-  // TODO: update error handling
-  async getReviewById(reviewId) {
-    const getReview = await reviewRepository.findReviewById(reviewId);
+  async deleteReview(userId, bookId, reviewId) {
+    const review = await reviewRepository.findReviewById(reviewId);
 
-    if (!getReview) {
-      return { errorType: "REVIEW_NOT_FOUND", data: null };
+    if (!review) {
+      throw new CustomError("Yorum bulunamadı", 404, "REVIEW_NOT_FOUND");
     }
-    return { errorType: null, data: getReview };
+
+    if (review.book_id !== bookId) {
+      throw new CustomError(
+        "Bu kitaba ait böyle bir yorum bulunamadı",
+        404,
+        "REVIEW_NOT_FOUND",
+      );
+    }
+
+    if (review.user_id !== userId) {
+      throw new CustomError(
+        "Bu yorumu silme yetkiniz yok",
+        403,
+        "AUTHORIZATION_ERROR",
+      );
+    }
+
+    const isDeleted = await reviewRepository.deleteById(reviewId);
+
+    if (!isDeleted) {
+      throw new CustomError("Yorum silinemedi", 500, "DELETE_FAILED");
+    }
+
+    return true;
   },
-  // TODO: postpone update
   async updateReview(reviewData) {
-    const { reviewId, bookId, userId, puan, yorum_metni } = reviewData;
+    const { reviewId, bookId, userId, rating, content } = reviewData;
 
-    // 1. Integer Kontrolü
-    if (puan !== undefined && !Number.isInteger(puan)) {
-      return { errorType: "INVALID_TYPE", data: null };
+    if (rating === undefined && content === undefined) {
+      throw new CustomError(
+        "Güncellenecek en az bir alan gönderilmelidir.",
+        400,
+        "NO_UPDATE_FIELDS",
+      );
+    }
+    // Puan tipi kontrolü
+    if (rating !== undefined && !Number.isInteger(rating)) {
+      throw new CustomError(
+        "Puan tam sayı olmalıdır.",
+        400,
+        "INVALID_RATING_TYPE",
+      );
     }
 
-    // 2. Puan Sınırı (0-5 arası örneği)
-    if (puan !== undefined && (puan < 1 || puan > 5)) {
-      return { errorType: "OUT_OF_RANGE", data: null };
+    // Puan aralığı kontrolü
+    if (rating !== undefined && (rating < 1 || rating > 5)) {
+      throw new CustomError(
+        "Puan 1 ile 5 arasında olmalıdır.",
+        400,
+        "INVALID_RATING_RANGE",
+      );
     }
 
-    // 3. Yorum Uzunluğu (Örn: Max 500 karakter)
-    if (
-      (yorum_metni !== undefined && yorum_metni.length > 500) ||
-      yorum_metni.length < 3
-    ) {
-      return { errorType: "CONTENT_TOO_LONG_OR_TOO_SHORT", data: null };
+    // Yorum uzunluğu kontrolü
+    if (content !== undefined && (content.length < 3 || content.length > 500)) {
+      throw new CustomError(
+        "Yorum 3 ile 500 karakter arasında olmalıdır.",
+        400,
+        "INVALID_COMMENT_LENGTH",
+      );
     }
-    const existing = await reviewRepository.findReviewById(reviewId);
 
-    const finalRating = puan ?? existing.rating;
-    const finalComment = yorum_metni ?? existing.comment;
+    // Mevcut review'ı bul
+    const existingReview = await reviewRepository.findReviewById(reviewId);
 
-    const finalReviewData = {
+    if (!existingReview) {
+      throw new CustomError("Yorum bulunamadı.", 404, "REVIEW_NOT_FOUND");
+    }
+
+    // Review gerçekten bu kitaba mı ait?
+    if (existingReview.book_id !== bookId) {
+      throw new CustomError(
+        "Bu kitaba ait böyle bir yorum bulunamadı.",
+        404,
+        "REVIEW_NOT_FOUND",
+      );
+    }
+
+    // Review'ın sahibi mi?
+    if (existingReview.user_id !== userId) {
+      throw new CustomError(
+        "Bu yorumu güncelleme yetkiniz yok.",
+        403,
+        "REVIEW_UPDATE_FORBIDDEN",
+      );
+    }
+
+    // Güncellenecek son değerler
+    const finalRating = rating ?? existingReview.rating;
+    const finalComment = content ?? existingReview.comment;
+
+    const updated = await reviewRepository.updateReviewById({
       reviewId,
-      bookId,
-      userId,
       finalRating,
       finalComment,
-    };
-    const updated = await reviewRepository.updateReviewById(finalReviewData);
+    });
 
     if (!updated) {
-      return { errorType: "UPDATE_FAILED", data: null };
+      throw new CustomError(
+        "Yorum güncellenemedi.",
+        500,
+        "REVIEW_UPDATE_FAILED",
+      );
     }
-    return { errorType: null, data: updated };
+
+    return updated;
   },
   // TODO: for feed
   async getAllReviews(queryParams) {

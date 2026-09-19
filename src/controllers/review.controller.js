@@ -61,26 +61,16 @@ const reviewController = {
   },
   async deleteReviewById(req, res, next) {
     try {
-      const reviewId = req.params.reviewId;
-      const bookId = req.params.id;
-      const userId = req.user.id;
-      const review = await reviewService.deleteReviewById(
-        bookId,
-        reviewId,
-        userId,
+      const isDeleted = await reviewService.deleteReview(
+        req.user.id,
+        req.params.id,
+        req.params.reviewId,
       );
 
-      if (review.errorType === "REVIEW_NOT_FOUND") {
-        throw new CustomError(
-          "Değerlendirme silinemedi. Bilgileri kontrol edin veya yetkiniz olduğundan emin olun",
-          404,
-          "REVIEW_NOT_FOUND",
-        );
-      }
       res.status(200).json({
         success: true,
         message: "Yorum başarıyla silindi",
-        data: review.data,
+        data: isDeleted,
       });
     } catch (error) {
       next(error);
@@ -91,45 +81,16 @@ const reviewController = {
       const reviewId = req.params.reviewId;
       const bookId = req.params.id;
       const userId = req.user.id;
-      const { puan, yorum_metni } = req.body;
+      const { rating, content } = req.body;
 
-      const reviewData = { reviewId, bookId, userId, puan, yorum_metni };
+      const reviewData = { reviewId, bookId, userId, rating, content };
 
       const review = await reviewService.updateReview(reviewData);
 
-      if (review.errorType === "INVALID_TYPE") {
-        throw new CustomError(
-          "Puan bir tam sayı olmalıdır",
-          400,
-          "INVALID_TYPE",
-        );
-      }
-      if (review.errorType === "OUT_OF_RANGE") {
-        throw new CustomError(
-          "Puan 0 ile 5 arasında olmalıdır",
-          400,
-          "OUT_OF_RANGE",
-        );
-      }
-      if (review.errorType === "CONTENT_TOO_LONG_OR_TOO_SHORT") {
-        throw new CustomError(
-          "Yorum minimum 3, maxiumum 500 karakterden oluşmalı",
-          400,
-          "CONTENT_TOO_LONG_OR_TOO_SHORT",
-        );
-      }
-
-      if (review.errorType === "UPDATE_FAILED") {
-        throw new CustomError(
-          "Güncellenmek istenen inceleme bulunamadı.",
-          404,
-          "RESOURCE_NOT_FOUND",
-        );
-      }
       res.status(200).json({
         success: true,
         message: "İnceleme başarıyla güncellendi",
-        data: review.data,
+        data: review,
       });
     } catch (error) {
       next(error);

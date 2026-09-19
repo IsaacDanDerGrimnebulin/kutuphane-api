@@ -69,46 +69,33 @@ const reviewRepository = {
       created_at: row.created_at,
     };
   },
-  async deleteReviewById(bookId, reviewId, userId) {
-    const query =
-      "DELETE FROM incelemeler WHERE id = $1 AND kitap_id = $2 AND kullanici_id = $3 RETURNING *";
-
-    const result = await db.query(query, [reviewId, bookId, userId]);
-    const row = result.rows[0];
-    if (!row) return null;
-    return {
-      id: row.id,
-      book_id: row.kitap_id,
-      user_id: row.kullanici_id,
-      rating: row.puan,
-      comment: row.yorum_metni,
-      created_at: row.tarih,
-    };
+  async deleteById(reviewId) {
+    const query = "DELETE FROM reviews WHERE id = $1";
+    const result = await db.query(query, [reviewId]);
+    return result.rowCount > 0;
   },
   async updateReviewById(reviewData) {
-    const query = `UPDATE incelemeler
-                   SET puan = $4 ,yorum_metni= $5
-                   WHERE id = $1 AND kitap_id = $2 AND kullanici_id = $3
-                   RETURNING *`;
-    const { reviewId, bookId, userId, finalRating, finalComment } = reviewData;
-    const result = await db.query(query, [
-      reviewId,
-      bookId,
-      userId,
-      finalRating,
-      finalComment,
-    ]);
+    const query = `UPDATE reviews
+                              SET rating = $2,
+                                  content = $3,
+                                  updated_at = NOW()
+                              WHERE id = $1
+                              RETURNING *`;
+
+    const { reviewId, finalRating, finalComment } = reviewData;
+    const result = await db.query(query, [reviewId, finalRating, finalComment]);
     const row = result.rows[0];
 
     if (!row) return null;
 
     return {
       id: row.id,
-      book_id: row.kitap_id,
-      user_id: row.kullanici_id,
-      rating: row.puan,
-      comment: row.yorum_metni,
-      created_at: row.tarih,
+      book_id: row.book_id,
+      user_id: row.user_id,
+      rating: row.rating,
+      comment: row.content,
+      created_at: row.created_at,
+      updated_at: row.updated_at,
     };
   },
   async exists(id) {
