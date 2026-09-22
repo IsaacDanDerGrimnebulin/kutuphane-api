@@ -311,10 +311,9 @@ const reviewRepository = {
     });
     return resultDAL;
   },
-
   async getReviewCountByUserId(userId) {
-    const query = `SELECT COUNT(*)::INT FROM users
-                    WHERE id = $1`;
+    const query = `SELECT COUNT(*)::INT FROM reviews
+                    WHERE user_id = $1`;
     const result = await db.query(query, [userId]);
     return Number(result.rows[0].count);
   },
