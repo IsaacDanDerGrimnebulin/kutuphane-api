@@ -99,7 +99,7 @@ const reviewRepository = {
     };
   },
   async exists(id) {
-    const query = "SELECT EXISTS(SELECT 1 FROM incelemeler WHERE id = $1)";
+    const query = "SELECT EXISTS(SELECT 1 FROM reviews WHERE id = $1)";
     const result = await db.query(query, [id]);
     return result.rows[0].exists; // true veya false döner
   },
@@ -170,34 +170,32 @@ const reviewRepository = {
     return results;
   },
   async addReviewLike(userId, reviewId) {
-    const query = `INSERT INTO inceleme_begenileri (kullanici_id, inceleme_id) VALUES ($1, $2) RETURNING *`;
+    const query = `INSERT INTO likes (user_id, review_id) VALUES ($1, $2) RETURNING *`;
     const values = [userId, reviewId];
     const result = await db.query(query, values);
     const row = result.rows[0];
     return {
-      like_id: row.id,
-      review_id: row.inceleme_id,
-      user_id: row.kullanici_id,
+      review_id: row.review_id,
+      user_id: row.user_id,
       created_at: row.created_at,
     };
   },
   async deleteReviewLike(userId, reviewId) {
-    const query = `DELETE FROM inceleme_begenileri
-                       WHERE kullanici_id = $1 AND inceleme_id = $2 RETURNING *`;
+    const query = `DELETE FROM likes
+                       WHERE user_id = $1 AND review_id = $2 RETURNING *`;
     const values = [userId, reviewId];
     const result = await db.query(query, values);
     const row = result.rows[0];
 
     return {
-      like_id: row.id,
-      review_id: row.inceleme_id,
-      user_id: row.kullanici_id,
+      review_id: row.review_id,
+      user_id: row.user_id,
       created_at: row.created_at,
     };
   },
   async existingLike(userId, reviewId) {
-    const query = `SELECT EXISTS (SELECT id FROM inceleme_begenileri
-                   WHERE kullanici_id = $1 AND inceleme_id = $2)`;
+    const query = `SELECT EXISTS (SELECT * FROM likes
+                   WHERE user_id = $1 AND review_id = $2)`;
     const values = [userId, reviewId];
     const result = await db.query(query, values);
 

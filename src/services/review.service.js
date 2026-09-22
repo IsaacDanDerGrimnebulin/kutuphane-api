@@ -202,16 +202,20 @@ const reviewService = {
     };
   },
   async toggleLike(userId, reviewId) {
-    const isExist = await reviewRepository.existingLike(userId, reviewId);
-    if (isExist) {
+    const isReviewExist = await reviewRepository.exists(reviewId);
+    if (!isReviewExist) {
+      throw new CustomError("Yorum bulunamadı", 404, "REVIEW_NOT_FOUND");
+    }
+    const isLikeExist = await reviewRepository.existingLike(userId, reviewId);
+    if (isLikeExist) {
       const removeLike = await reviewRepository.deleteReviewLike(
         userId,
         reviewId,
       );
-      return { data: removeLike, errorType: null, liked: false };
+      return { data: removeLike, liked: false };
     }
     const insertLike = await reviewRepository.addReviewLike(userId, reviewId);
-    return { data: insertLike, errorType: null, liked: true };
+    return { data: insertLike, liked: true };
   },
   async getAllReviewsByUserId(queryParams) {
     const { ownerId, userId, page = 1, limit = 10 } = queryParams;
