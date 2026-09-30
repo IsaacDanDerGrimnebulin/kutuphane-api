@@ -323,17 +323,17 @@ const reviewRepository = {
   },
   async getAverageRating() {
     const query =
-      "SELECT ROUND(AVG(puan)::numeric, 2) as average_rating FROM incelemeler";
+      "SELECT ROUND(AVG(rating)::numeric, 2) as average_rating FROM reviews";
     const result = await db.query(query);
     return Number(result.rows[0].average_rating);
   },
   // TODO: make the day value dynamic if needed
   async getDailyReviewCountsLast30Days() {
     const query = `SELECT
-                        DATE(tarih) AS day,
+                        DATE(created_at) AS day,
                         COUNT(*) AS count
-                    FROM incelemeler
-                    WHERE tarih >= NOW() - INTERVAL '30 days'
+                    FROM reviews
+                    WHERE created_at >= NOW() - INTERVAL '30 days'
                     GROUP BY day
                     ORDER BY day`;
     const result = await db.query(query);
@@ -347,13 +347,15 @@ const reviewRepository = {
   },
   // TODO: make limit dynamic if needed
   async findMostPopularCategories() {
-    const query = `SELECT ka.ad AS genre, COUNT(i.id) AS review_count
-                      FROM incelemeler i
-                      JOIN kitaplar k ON i.kitap_id = k.id
-                      JOIN kategoriler ka ON k.kategori_id = ka.id
-                      GROUP BY ka.ad
-                      ORDER BY review_count DESC
-                      LIMIT 5`;
+    const query = `SELECT 
+                    c.title AS genre,
+                    COUNT(r.id) AS review_count
+                    FROM reviews r
+                    JOIN books b ON r.book_id = b.id
+                    JOIN categories c ON b.category_id = c.id
+                    GROUP BY c.title
+                    ORDER BY review_count DESC
+                    LIMIT 5`;
     const result = await db.query(query);
     const data = result.rows.map((row) => {
       return {

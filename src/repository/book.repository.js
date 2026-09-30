@@ -134,21 +134,21 @@ const bookRepository = {
   },
   async findHighestRated() {
     const query = `SELECT 
-                        k.id,
-                        k.kitap_adi, 
-                        ROUND(AVG(i.puan)::numeric,2) as avg_rating, 
-                        COUNT(i.id) as review_count
-                        FROM incelemeler i
-                        JOIN kitaplar k  ON k.id = i.kitap_id
-                      GROUP BY k.id
-                      HAVING COUNT(i.id) > 5
+                        b.id,
+                        b.title, 
+                        ROUND(AVG(r.rating)::numeric,2) as avg_rating, 
+                        COUNT(r.id) as review_count
+                        FROM reviews r
+                        JOIN books b  ON b.id = r.book_id
+                      GROUP BY b.id
+                      HAVING COUNT(b.id) > 3
                       ORDER BY avg_rating DESC
                         LIMIT 5`;
     const result = await db.query(query);
     const resultDAL = result.rows.map((row) => {
       return {
         id: row.id,
-        book_name: row.kitap_adi,
+        book_name: row.title,
         avg_rating: Number(row.avg_rating),
         review_count: Number(row.review_count),
       };
@@ -157,21 +157,21 @@ const bookRepository = {
   },
   async findLowestRated() {
     const query = `SELECT 
-                        k.id,
-                        k.kitap_adi, 
-                        ROUND(AVG(i.puan)::numeric,2) as avg_rating, 
-                        COUNT(i.id) as review_count
-                        FROM incelemeler i
-                        JOIN kitaplar k  ON k.id = i.kitap_id
-                      GROUP BY k.id
-                      HAVING COUNT(i.id) > 5
+                        b.id,
+                        b.title, 
+                        ROUND(AVG(r.rating)::numeric,2) as avg_rating, 
+                        COUNT(r.id) as review_count
+                        FROM reviews r
+                        JOIN books b  ON b.id = r.book_id
+                      GROUP BY b.id
+                      HAVING COUNT(r.id) > 2
                       ORDER BY avg_rating ASC
                         LIMIT 5`;
     const result = await db.query(query);
     const resultDAL = result.rows.map((row) => {
       return {
         id: row.id,
-        book_name: row.kitap_adi,
+        book_name: row.title,
         avg_rating: Number(row.avg_rating),
         review_count: Number(row.review_count),
       };
@@ -180,20 +180,20 @@ const bookRepository = {
   },
   async findMostReviewed() {
     const query = `SELECT 
-                      k.id,
-                        k.kitap_adi, 
-                      ROUND(AVG(i.puan)::numeric,2) as avg_rating, 
-                      COUNT(i.id) as review_count
-                    FROM incelemeler i
-                    JOIN kitaplar k  ON k.id = i.kitap_id
-                    GROUP BY k.id
-                    ORDER BY review_count DESC
-                    LIMIT 5`;
+                      b.id,
+                      b.title, 
+                      ROUND(AVG(r.rating)::numeric,2) as avg_rating, 
+                      COUNT(r.id) as review_count
+                      FROM reviews r
+                      JOIN books b  ON b.id = r.book_id
+                      GROUP BY b.id
+                      ORDER BY review_count DESC
+                      LIMIT 5`;
     const result = await db.query(query);
     const resultDAL = result.rows.map((row) => {
       return {
         id: row.id,
-        book_name: row.kitap_adi,
+        book_name: row.title,
         avg_rating: Number(row.avg_rating),
         review_count: Number(row.review_count),
       };
